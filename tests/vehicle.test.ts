@@ -113,8 +113,8 @@ test('side steps appear only when the chassis is raised and hang below the sill 
     assert.equal(state.sideSteps.visible, height.lift > 0, wheel.id + '/' + height.id);
     if (height.lift > 0) {
       const worldY = state.bodyY + state.sideSteps.y;
-      assert.ok(worldY > 0.55 && worldY < 1.0, 'step world height ' + worldY);
-      assert.ok(state.sideSteps.y < 0.92, 'step must hang below the door sill');
+      assert.ok(worldY > 0.55 && worldY < 1.1, 'step world height ' + worldY);
+      assert.ok(state.sideSteps.y < 1.26 - 0.3, 'step must hang clearly below the door sill');
     }
   }
 });

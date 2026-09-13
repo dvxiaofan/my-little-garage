@@ -186,18 +186,19 @@ export function createVehicle(makeLabel = labelTexture) {
     doorPivots.push(pivot);
   }
 
-  // Side steps drop out under the doors when the chassis is raised, so the driver can still climb in.
-  const sideSteps: Array<{ group: THREE.Group; brackets: THREE.Mesh[]; side: number }> = [];
+  // Side steps hang from the sill on solid brackets when the chassis is raised, so the driver can still climb in.
+  const sillBottom = 1.26;
+  const sideSteps: Array<{ group: THREE.Group; brackets: THREE.Mesh[] }> = [];
   for (const side of [-1, 1]) {
     const group = new THREE.Group();
     group.name = side < 0 ? 'left-side-step' : 'right-side-step';
-    box(group, [0.17, 0.045, 1.00], [side * 1.20, 0, 0], dark, 0.02);
-    for (const z of [-0.36, -0.12, 0.12, 0.36]) box(group, [0.15, 0.014, 0.05], [side * 1.20, 0.028, z], silver, 0.005);
-    const brackets = [-0.34, 0.34].map((z) => rod(body, new THREE.Vector3(side * 1.08, 0.92, z), new THREE.Vector3(side * 1.16, 0.70, z), 0.03, dark));
+    box(group, [0.30, 0.05, 1.02], [side * 1.17, 0, 0], dark, 0.02);
+    box(group, [0.05, 0.05, 1.02], [side * 1.335, 0.012, 0], rubberEdge, 0.02);
+    for (const z of [-0.36, -0.12, 0.12, 0.36]) box(group, [0.20, 0.014, 0.05], [side * 1.17, 0.03, z], silver, 0.005);
+    const brackets = [-0.33, 0.33].map((z) => box(group, [0.11, 1, 0.16], [side * 1.09, 0.5, z], dark, 0.015));
     group.visible = false;
-    brackets.forEach((item) => { item.visible = false; });
     body.add(group);
-    sideSteps.push({ group, brackets, side });
+    sideSteps.push({ group, brackets });
   }
 
   const hoodPivot = new THREE.Group();
@@ -366,15 +367,12 @@ export function createVehicle(makeLabel = labelTexture) {
     for (const axle of axles) axle.scale.y = setting.track / 1.19;
     cargo.visible = design.roof === 'cargo';
     tent.visible = design.roof === 'tent';
-    const stepY = 0.86 - lift * 1.05;
+    const stepY = 0.80 - lift * 0.7;
     for (const step of sideSteps) {
       step.group.visible = lift > 0;
       step.group.position.y = stepY;
-      step.brackets.forEach((bracket, index) => {
-        bracket.visible = lift > 0;
-        const z = index === 0 ? -0.34 : 0.34;
-        setRod(bracket, new THREE.Vector3(step.side * 1.08, 0.92, z), new THREE.Vector3(step.side * 1.18, stepY + 0.02, z));
-      });
+      const height = sillBottom - stepY + 0.03;
+      step.brackets.forEach((bracket) => { bracket.scale.y = height; bracket.position.y = height / 2; });
     }
     applyPose(lastPose);
   }
