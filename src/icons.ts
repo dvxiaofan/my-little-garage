@@ -30,6 +30,7 @@ const paths: Record<string, string> = {
   cargo: '<rect x="3" y="7" width="18" height="13" rx="3"/><path d="M8 7V4h8v3M7 7v13M17 7v13M3 13h18"/>',
   tent: '<path d="m2 20 10-16 10 16H2ZM8 20l4-7 4 7M10 2l2 2 2-2"/>',
   none: '<path d="M3 17h18M6 17v-3h12v3M8 8h8"/>',
+  road: '<path d="M4 21 9 3h6l5 18M12 5v2m0 4v2m0 4v3"/>',
 };
 
 export function icon(name: string, className = ''): string {

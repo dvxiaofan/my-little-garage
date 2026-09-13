@@ -104,6 +104,18 @@ button:focus:not(:focus-visible) { outline: none; }
 .spring-button[aria-busy="true"] .spring-icon { animation: spring-squash 1.3s ease-in-out infinite; }
 .spring-progress { display: none; position: absolute; bottom: 0; height: 3px; background: #cebc7d; left: 0; }
 .spring-button[aria-busy="true"] .spring-progress { display: block; animation: progress 2.9s linear forwards; }
+.drive-button { position: relative; overflow: hidden; display: flex; align-items: center; gap: 12px; width: 100%; min-height: 92px; padding: 17px 14px; border: 1px solid #e0c9a4; border-radius: 16px; background: #f6e7c9; text-align: left; color: #7a6238; transition: background .2s, transform .2s, box-shadow .2s; }
+.drive-icon { display: grid; place-items: center; width: 42px; height: 48px; }
+.drive-icon .icon { width: 33px; height: 33px; stroke-width: 1.5; }
+.drive-button .button-copy strong { color: #6b4f24; font-size: 17px; }
+.drive-button .button-copy small { color: #a58a5c; font-size: 11px; }
+.drive-button .spring-arrow { color: #b99b68; }
+.drive-button:hover:not(:disabled) { background: #f1dcb4; transform: translateY(-2px); box-shadow: 0 6px 16px #6b4f2422; }
+.drive-button:active:not(:disabled) { transform: translateY(1px); }
+.drive-button[aria-busy="true"] { background: #f1dcb4; }
+.drive-button[aria-busy="true"] .drive-icon { animation: drive-bounce .55s ease-in-out infinite; }
+.drive-progress { display: none; position: absolute; bottom: 0; height: 3px; background: #c99a4a; left: 0; }
+.drive-button[aria-busy="true"] .drive-progress { display: block; animation: progress 22s linear forwards; }
 .discovery-note { margin-top: auto; padding: 21px 0 0; display: flex; gap: 10px; min-height: 98px; }
 .note-icon { color: #bdac79; padding-top: 2px; }
 .note-icon .icon { width: 18px; height: 18px; }
@@ -227,6 +239,7 @@ body:has(dialog[open]) { overflow: hidden; }
 @keyframes waiting { 50% { transform: translateY(-7px) rotate(-4deg); } }
 @keyframes spring-squash { 45% { transform: scaleY(.65); } 75% { transform: scaleY(1.08); } }
 @keyframes progress { from { width: 0; } to { width: 100%; } }
+@keyframes drive-bounce { 50% { transform: translateY(-3px) rotate(-3deg); } }
 
 @media (min-height: 950px) and (min-width: 1100px) {
   .control-section { margin-top: 34px; }
@@ -259,6 +272,7 @@ body:has(dialog[open]) { overflow: hidden; }
   .panel-heading h2 { font-size: 21px; margin-bottom: 7px; }
   .control-section { margin-top: 0; }
   .control-section:first-of-type { grid-row: span 2; }
+  .control-section:last-of-type { grid-column: 1 / -1; }
   .part-button { min-height: 183px; }
   .part-button > .icon { width: 34px; height: 34px; margin-bottom: 20px; }
   .discovery-note { grid-column: 1 / -1; padding: 22px 0 0; min-height: 0; }
