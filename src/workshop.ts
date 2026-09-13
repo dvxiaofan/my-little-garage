@@ -47,7 +47,7 @@ export function workshopMarkup(): string {
 
 export function collectionMarkup(): string {
   return '<dialog id="collection-dialog" class="collection-dialog" aria-labelledby="collection-title">' +
-    '<div class="collection-heading"><div><span class="panel-kicker">MADE BY YOU</span><h2 id="collection-title">我的小车<span id="collection-count"></span></h2><p>每一辆，都是你的主意。</p></div><button id="close-collection" class="dialog-close" aria-label="关上车库">' + icon('close') + '</button></div>' +
+    '<div class="collection-heading"><div><span class="panel-kicker">MADE BY YOU</span><h2 id="collection-title">我的车库<span id="collection-count"></span></h2><p>每一辆，都是你的主意。</p></div><button id="close-collection" class="dialog-close" aria-label="关上车库">' + icon('close') + '</button></div>' +
     '<div id="collection-notice" class="collection-notice" role="status" hidden></div>' +
     '<div id="saved-cars" class="saved-cars"></div>' +
     '<div id="collection-empty" class="collection-empty">' + icon('garage') + '<h3>等你的第一辆小车</h3><p>换一换颜色和轮子，再点「存进车库」。</p><button id="start-building" class="save-button">去改一改' + icon('arrow') + '</button></div>' +
@@ -206,7 +206,7 @@ export class Workshop {
     if (result === 'saved') this.removed = null;
     this.refresh();
     this.options.sound();
-    this.options.note(this.store.persisted ? '「' + this.store.draft.name + '」存好啦！点画面右上的「我的小车」就能找到它。' : '这次先收好啦。浏览器没能保存，关掉或刷新后可能找不到它。');
+    this.options.note(this.store.persisted ? '「' + this.store.draft.name + '」存好啦！点画面右上的「我的车库」就能找到它。' : '这次先收好啦。浏览器没能保存，关掉或刷新后可能找不到它。');
   }
 
   private openCollection(message = ''): void {

@@ -35,7 +35,7 @@ app.innerHTML = [
   '  <section class="stage" aria-labelledby="vehicle-name">',
   '    <div id="scene" class="scene" aria-busy="true"></div>',
   '    <div class="stage-intro"><div class="eyebrow"><span class="tiny-dot"></span>小小探索家 · 我的作品</div><h1 id="vehicle-name">越野小勇士</h1><p id="vehicle-description">大大的轮子，装得下每一份好奇。</p></div>',
-  '    <button id="collection-button" class="collection-button" data-car-control disabled>' + icon('garage') + '<span>我的小车</span><span id="saved-count" class="saved-count">0</span></button>',
+  '    <button id="collection-button" class="collection-button" data-car-control disabled>' + icon('garage') + '<span>我的车库</span><span id="saved-count" class="saved-count">0</span></button>',
   '    <div id="scene-feedback" class="scene-feedback" role="status"><div class="loading-wheel">' + icon('car') + '</div><strong id="feedback-title">小车马上到</strong><p id="feedback-description">正在打开你的车库…</p><button id="retry-button" class="retry-button" hidden>重新试试</button></div>',
   '    <div class="camera-tools"><div class="view-controls" role="group" aria-label="观察角度">',
   viewButton('front', '前面', 'front'), viewButton('side', '侧面', 'side'), viewButton('rear', '后面', 'rear'),

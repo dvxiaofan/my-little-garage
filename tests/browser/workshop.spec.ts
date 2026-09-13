@@ -72,7 +72,7 @@ test('distinct named cars survive reload, can be reopened, and are kept by resto
   await choose(page, '恢复原样');
   expect((await snapshot(page)).vehicle.design).toEqual(DEFAULT_DESIGN);
   await page.locator('#collection-button').click();
-  await expect(page.getByRole('dialog', { name: /我的小车/ })).toBeVisible();
+  await expect(page.getByRole('dialog', { name: /我的车库/ })).toBeVisible();
   await expect(page.locator('.saved-car')).toHaveCount(2);
   await page.screenshot({ path: 'test-results/workshop-collection.png', animations: 'disabled' });
   await choose(page, '开出蓝天旅行号');
