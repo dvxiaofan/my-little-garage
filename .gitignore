@@ -19,3 +19,6 @@ assets/
 *.log
 .idea/
 .vscode/
+
+# 车型参考照片（官方宣传图，有版权，仅本地建模用，不入公开仓库）
+docs/reference/
