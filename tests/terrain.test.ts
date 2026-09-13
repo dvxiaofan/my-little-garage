@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { ROAD_FLAT, ROAD_LENGTH, ROAD_MAX_HEIGHT, createRoad, roadHeight } from '../src/terrain.ts';
+import { TRIP_DISTANCE } from '../src/controller.ts';
 
 test('road height is periodic over one lap and flat near the start so trips begin and end level', () => {
   for (const z of [0, 7.3, 31, 55.5, 90]) {
@@ -27,6 +28,10 @@ test('road actually has bumps, keeps them within the limit, and both wheel track
   }
   assert.ok(max > 0.2 && min < -0.2, 'road should rise and fall noticeably: ' + min + '..' + max);
   assert.ok(Math.abs(roadHeight(ROAD_FLAT + 6)) > 0.02 || Math.abs(roadHeight(ROAD_FLAT + 9)) > 0.02);
+});
+
+test('a trip drives exactly one lap of road', () => {
+  assert.equal(TRIP_DISTANCE, ROAD_LENGTH);
 });
 
 test('road mesh scrolls one lap length and wraps', () => {

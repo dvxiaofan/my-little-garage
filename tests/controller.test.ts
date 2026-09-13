@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { CarController } from '../src/controller.ts';
+import { CarController, TRIP_DISTANCE } from '../src/controller.ts';
 
 function advance(controller: CarController, seconds: number): void {
   for (let frame = 0; frame < seconds * 60; frame++) controller.update(1 / 60);
@@ -40,7 +40,7 @@ test('a suspension cycle cannot stack, preserves opened parts, and becomes repea
   assert.equal(car.pressSuspension(), false);
   advance(car, 2.3);
   assert.equal(car.pose.compression, 0);
-  assert.deepEqual(car.state, { doors: true, hood: true, trunk: true, lights: true, suspension: 'idle' });
+  assert.deepEqual(car.state, { doors: true, hood: true, trunk: true, lights: true, suspension: 'idle', driving: 'idle' });
   assert.equal(car.pressSuspension(), true);
 });
 
@@ -64,4 +64,56 @@ test('reduced-motion mode still shows and completes the suspension cycle', () =>
   advance(car, 0.6);
   assert.equal(car.pose.compression, 0);
   assert.equal(car.state.suspension, 'idle');
+});
+
+test('a trip closes opened parts, drives exactly one lap, cannot stack or overlap the suspension, and reopens parts afterwards', () => {
+  const car = new CarController();
+  car.toggle('doors');
+  car.toggle('trunk');
+  car.toggleLights();
+  advance(car, 1.5);
+  assert.equal(car.startDrive(), true);
+  assert.equal(car.startDrive(), false);
+  assert.equal(car.pressSuspension(), false);
+  assert.equal(car.state.doors, false);
+  assert.equal(car.state.trunk, false);
+  assert.equal(car.state.lights, true);
+  advance(car, 1);
+  assert.equal(car.state.driving, 'starting');
+  assert.ok(car.pose.distance > 0 && car.pose.distance < TRIP_DISTANCE / 4);
+  assert.ok(car.pose.doors < 0.01, 'doors should have closed for the trip');
+  advance(car, 10);
+  assert.equal(car.state.driving, 'cruising');
+  const midway = car.pose.distance;
+  advance(car, 1 / 60);
+  assert.ok(car.pose.distance > midway, 'distance keeps increasing');
+  advance(car, 12);
+  assert.equal(car.state.driving, 'idle');
+  assert.equal(car.pose.distance, TRIP_DISTANCE);
+  assert.equal(car.tripProgress, 0);
+  assert.equal(car.state.doors, true);
+  assert.equal(car.state.trunk, true);
+  assert.equal(car.state.hood, false);
+  assert.equal(car.state.lights, true);
+  assert.equal(car.pressSuspension(), true);
+});
+
+test('reset during a trip stops it, and reduced motion completes a shorter lap', () => {
+  const car = new CarController();
+  car.toggle('hood');
+  car.startDrive();
+  advance(car, 5);
+  car.reset();
+  advance(car, 30);
+  assert.equal(car.state.driving, 'idle');
+  assert.equal(car.pose.distance, 0);
+  assert.equal(car.state.hood, false);
+
+  const calm = new CarController(true);
+  calm.startDrive();
+  advance(calm, 4);
+  assert.ok(calm.pose.distance > 10);
+  advance(calm, 5);
+  assert.equal(calm.state.driving, 'idle');
+  assert.equal(calm.pose.distance, TRIP_DISTANCE);
 });
