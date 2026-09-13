@@ -61,20 +61,25 @@ function carPreview(design: CarDesign): string {
   const r = design.wheels === 'crawler' ? 23 : design.wheels === 'road' ? 15 : 19;
   const lift = design.height === 'high' ? 10 : design.height === 'raised' ? 5 : 0;
   const y = 116 - r - lift;
-  const roof = design.roof === 'cargo' ? '<rect x="106" y="' + (y - 56) + '" width="67" height="13" rx="4" fill="#9da981"/><path d="M120 ' + (y - 56) + 'v13m39-13v13" stroke="#f4e6c8" stroke-width="4"/>'
-    : design.roof === 'tent' ? '<path d="M99 ' + (y - 44) + 'l39-30 40 30Z" fill="#d5b56e" stroke="#657159" stroke-width="2"/><path d="m128 ' + (y - 44) + ' 10-16 11 16" fill="#657159"/>' : '';
-  const tires = [77, 188].map((x) => '<circle cx="' + x + '" cy="' + (122 - r) + '" r="' + r + '" fill="#34443a"/>' +
+  const roofY = y - 58;
+  const roof = design.roof === 'cargo' ? '<rect x="96" y="' + (roofY - 13) + '" width="72" height="13" rx="4" fill="#9da981"/><path d="M110 ' + (roofY - 13) + 'v13m44-13v13" stroke="#f4e6c8" stroke-width="4"/>'
+    : design.roof === 'tent' ? '<path d="M90 ' + roofY + 'l42-30 42 30Z" fill="#d5b56e" stroke="#657159" stroke-width="2"/><path d="m121 ' + roofY + ' 11-16 11 16" fill="#657159"/>' : '';
+  const tires = [72, 190].map((x) => '<circle cx="' + x + '" cy="' + (122 - r) + '" r="' + r + '" fill="#34443a"/>' +
     '<circle cx="' + x + '" cy="' + (122 - r) + '" r="' + (r - 2) + '" fill="none" stroke="#6a7669" stroke-width="2" stroke-dasharray="' + (design.wheels === 'crawler' ? '5 4' : '2 2') + '"/>' +
     '<circle cx="' + x + '" cy="' + (122 - r) + '" r="' + r * 0.54 + '" fill="' + (design.wheels === 'crawler' ? '#d6b266' : '#eae6d4') + '"/>' +
     '<circle cx="' + x + '" cy="' + (122 - r) + '" r="4" fill="#657159"/>').join('');
-  return '<svg viewBox="0 0 260 144" fill="none" aria-hidden="true"><ellipse cx="132" cy="124" rx="97" ry="9" fill="#dddccc"/>' +
-    '<path d="M77 ' + y + 'v25m111-25v25" stroke="#bda75d" stroke-width="5"/>' +
-    '<path d="M44 ' + (y - 18) + 'h42l8-24h111v54H44Z" fill="' + paint + '" stroke="#596b5633" stroke-width="2" stroke-linejoin="round"/>' +
-    '<rect x="89" y="' + (y - 45) + '" width="120" height="7" rx="3" fill="#f0e7ce"/>' +
-    '<path d="M99 ' + (y - 34) + 'h29v23H92Zm36 0h27v23h-27Zm33 0h29v23h-29Z" fill="#c2d5cc"/>' +
-    '<path d="M131 ' + (y - 36) + 'v42m33-42v42M117 ' + (y - 4) + 'h7" stroke="#344e4566" stroke-width="2"/>' +
-    '<rect x="103" y="' + (y - 1) + '" width="15" height="10" rx="2" fill="#f3e9d3"/>' +
-    '<rect x="38" y="' + (y + 5) + '" width="175" height="8" rx="3" fill="#576655"/><rect x="43" y="' + (y - 15) + '" width="6" height="10" rx="2" fill="#f9eac0"/>' +
+  // Boxy silhouette: flat roof, upright ends, black eyebrows over each wheel, spare tyre on the tail.
+  return '<svg viewBox="0 0 260 144" fill="none" aria-hidden="true"><ellipse cx="132" cy="124" rx="100" ry="9" fill="#dddccc"/>' +
+    '<path d="M72 ' + y + 'v25m118-25v25" stroke="#bda75d" stroke-width="5"/>' +
+    '<path d="M34 ' + (y - 22) + 'h44v-36h137v58H34Z" fill="' + paint + '" stroke="#596b5633" stroke-width="2" stroke-linejoin="round"/>' +
+    '<rect x="80" y="' + (y - 60) + '" width="133" height="6" rx="3" fill="#2f3a35"/>' +
+    '<path d="M82 ' + (y - 52) + 'l10-12h118v30H82Z" fill="#3d4b4d"/>' +
+    '<path d="M124 ' + (y - 52) + 'v30m40-30v30" stroke="#f0e7ce55" stroke-width="2"/>' +
+    '<path d="M148 ' + (y - 8) + 'h7m-56 0h7" stroke="#e9e1cb" stroke-width="3"/>' +
+    '<rect x="30" y="' + (y + 6) + '" width="190" height="8" rx="3" fill="#2f3a35"/>' +
+    '<path d="M50 ' + (y + 6) + 'h44v-10H50Zm118 0h44v-10h-44Z" fill="#2f3a35"/>' +
+    '<rect x="34" y="' + (y - 20) + '" width="18" height="6" rx="1.5" fill="#2f3a35"/><rect x="36" y="' + (y - 19) + '" width="5" height="4" fill="#f9eac0"/>' +
+    '<circle cx="222" cy="' + (y - 4) + '" r="16" fill="#34443a"/><circle cx="222" cy="' + (y - 4) + '" r="8" fill="#eae6d4"/>' +
     roof + tires + '</svg>';
 }
 
