@@ -1,0 +1,21 @@
+# dependencies / build
+node_modules/
+dist/
+.vite/
+
+# test artifacts
+test-results/
+playwright-report/
+playwright/.cache/
+
+# local scratch (uPic 原图已上传图床)
+assets/
+
+# env / os / editor
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log
+.idea/
+.vscode/

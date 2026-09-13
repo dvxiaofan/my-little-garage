@@ -1,0 +1,37 @@
+const paths: Record<string, string> = {
+  car: '<path d="m5 10 2-5h10l2 5M3 11a2 2 0 0 1 2-1h14a2 2 0 0 1 2 2v6H3v-6ZM5 18v2m14-2v2M7 14h.01M17 14h.01M8 10h8"/>',
+  door: '<path d="M6 21V4a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v17M4 21h15M9 6h5v7H9zM13 16h1"/>',
+  hood: '<path d="m4 11 8-7 8 7M4 15h16v5H4zM7 15v-4m10 4v-4M8 18h8"/>',
+  trunk: '<path d="M5 13V9l3-5h8l3 5v4M3 13h18v7H3zM7 9h10M8 16h8M6 20v1m12-1v1"/>',
+  light: '<path d="M13 5c-5 0-8 3-8 7s3 7 8 7V5ZM17 6l4-2m-4 6h4m-4 4h4m-4 4 4 2"/>',
+  spring: '<path d="M8 3h8M12 3v2m0 14v2m-4 0h8M8 5l8 3-8 3 8 3-8 3 8 2"/>',
+  reset: '<path d="M3 10a9 9 0 1 1 2 8M3 4v6h6"/>',
+  home: '<path d="M3 11 12 3l9 8M5 10v10h5v-6h4v6h5V10"/>',
+  front: '<path d="m5 9 2-5h10l2 5M4 10h16v9H4zM7 13h.01M17 13h.01M8 16h8M6 19v2m12-2v2"/>',
+  side: '<path d="M3 15v-5h4l3-5h7l3 5h1v7h-3M8 17h6M10 10h8M14 5v5"/><circle cx="5.5" cy="17" r="2.5"/><circle cx="16.5" cy="17" r="2.5"/>',
+  rear: '<path d="M5 9 7 4h10l2 5M4 9h16v10H4zM8 6h8M4 13h3v3H4m16-3h-3v3h3M10 15h4M6 19v2m12-2v2"/>',
+  rotate: '<path d="M4 8c2-3 5-4 8-4 5 0 9 3 9 8s-4 8-9 8-9-3-9-8M4 3v5h5"/>',
+  mouse: '<rect x="6" y="2" width="12" height="20" rx="6"/><path d="M12 6v4m-6 2h12"/>',
+  sound: '<path d="m11 4-5 4H2v8h4l5 4V4Zm4 4a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/>',
+  mute: '<path d="m11 4-5 4H2v8h4l5 4V4Zm5 5 5 6m0-6-5 6"/>',
+  sparkle: '<path d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5L12 3ZM20 2v4m-2-2h4"/>',
+  arrow: '<path d="M5 12h14m-5-5 5 5-5 5"/>',
+  book: '<path d="M12 5c-3-2-6-2-10-1v15c4-1 7-1 10 1 3-2 6-2 10-1V4c-4-1-7-1-10 1v15"/>',
+  check: '<path d="m5 12 4 4L19 6"/>',
+  help: '<circle cx="12" cy="12" r="9"/><path d="M9 9a3 3 0 0 1 6 0c0 2-3 2-3 4m0 3h.01"/>',
+  close: '<path d="m6 6 12 12M18 6 6 18"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/>',
+  wrench: '<path d="M14 6a5 5 0 0 0-6 6L3 17a2.8 2.8 0 0 0 4 4l5-5a5 5 0 0 0 6-6l-3 3-4-4 3-3Z"/>',
+  garage: '<path d="m3 9 9-6 9 6v12H3V9Zm4 12V11h10v10M7 15h10M7 18h10"/>',
+  save: '<path d="M5 3h12l4 4v14H3V3h2Zm2 0v6h10V3M7 21v-8h10v8"/>',
+  dice: '<rect x="3" y="3" width="18" height="18" rx="4"/><path d="M7 7h.01M17 7h.01M12 12h.01M7 17h.01M17 17h.01" stroke-width="3"/>',
+  trash: '<path d="M3 6h18M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7m4-7v7"/>',
+  undo: '<path d="m8 4-5 5 5 5M3 9h11a6 6 0 0 1 0 12h-3"/>',
+  cargo: '<rect x="3" y="7" width="18" height="13" rx="3"/><path d="M8 7V4h8v3M7 7v13M17 7v13M3 13h18"/>',
+  tent: '<path d="m2 20 10-16 10 16H2ZM8 20l4-7 4 7M10 2l2 2 2-2"/>',
+  none: '<path d="M3 17h18M6 17v-3h12v3M8 8h8"/>',
+};
+
+export function icon(name: string, className = ''): string {
+  return '<svg class="icon ' + className + '" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (paths[name] ?? paths.car) + '</svg>';
+}
