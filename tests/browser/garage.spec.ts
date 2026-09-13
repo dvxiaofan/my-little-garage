@@ -73,7 +73,7 @@ test('rapid reversing and resetting during a suspension cycle leave no stale act
   await expect.poll(async () => (await snapshot(page)).pose.compression, { intervals: [50] }).toBeGreaterThan(0.1);
   await page.getByRole('button', { name: '重来', exact: true }).click();
   const state = await snapshot(page);
-  expect(state.pose).toEqual({ doors: 0, hood: 0, trunk: 0, lights: false, compression: 0 });
+  expect(state.pose).toEqual({ doors: 0, hood: 0, trunk: 0, lights: false, compression: 0, distance: 0 });
   await expect(page.getByRole('button', { name: '压一压', exact: true })).toBeEnabled();
   await page.reload();
   await expect(page.locator('#scene canvas')).toHaveAttribute('data-ready', 'true');

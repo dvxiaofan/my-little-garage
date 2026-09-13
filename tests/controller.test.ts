@@ -52,7 +52,7 @@ test('reset during compression cancels the cycle and does not resume on later fr
   advance(car, 0.9);
   car.reset();
   advance(car, 4);
-  assert.deepEqual(car.pose, { doors: 0, hood: 0, trunk: 0, lights: false, compression: 0 });
+  assert.deepEqual(car.pose, { doors: 0, hood: 0, trunk: 0, lights: false, compression: 0, distance: 0 });
   assert.equal(car.state.suspension, 'idle');
 });
 

@@ -1,6 +1,9 @@
 import * as THREE from 'three';
 import { box, cylinder, labelTexture, rod, setRod } from './geometry.ts';
 import type { CarPose } from './controller.ts';
+
+/** Road height under each wheel: front-left, front-right, rear-left, rear-right. */
+export type WheelGround = [number, number, number, number];
 import { DEFAULT_DESIGN, PAINTS, WHEELS, designMeasurements, type CarDesign, type WheelId } from './customization.ts';
 
 class CoilCurve extends THREE.Curve<THREE.Vector3> {
@@ -287,12 +290,11 @@ export function createVehicle(makeLabel = labelTexture) {
     wheelStyles.push(variants);
     return mount;
   }
-  const springs: Array<{ mesh: THREE.Mesh; cap: THREE.Mesh; damper: THREE.Mesh; bottom: THREE.Vector3; top: THREE.Vector3 }> = [];
+  // Wheel and spring order: front-left, front-right, rear-left, rear-right. Front is negative z.
+  const springs: Array<{ mesh: THREE.Mesh; cap: THREE.Mesh; damper: THREE.Mesh; arm: THREE.Mesh; seat: THREE.Mesh; bottom: THREE.Vector3; top: THREE.Vector3; local: THREE.Vector3 }> = [];
   const coilGeometry = new THREE.TubeGeometry(new CoilCurve(), 144, 0.023, 7, false);
   for (const z of [-1.35, 1.35]) {
-    const axle = cylinder(runningGear, 0.095, 2.35, [0, 0.60, z], dark);
-    axle.rotation.z = Math.PI / 2;
-    axles.push(axle);
+    axles.push(rod(runningGear, new THREE.Vector3(-1.19, 0.60, z), new THREE.Vector3(1.19, 0.60, z), 0.095, dark));
     for (const side of [-1, 1]) {
       const tire = wheelSet(side);
       tire.position.set(side * 1.19, 0.60, z);
@@ -311,17 +313,17 @@ export function createVehicle(makeLabel = labelTexture) {
       const springZ = Math.sign(z) * 0.56;
       const bottom = new THREE.Vector3(side * 0.97, 0.64, springZ);
       const top = new THREE.Vector3(side * 0.97, 1.22, springZ);
-      rod(runningGear, new THREE.Vector3(side * 0.97, 0.64, z), bottom, 0.055, dark);
+      const arm = rod(runningGear, new THREE.Vector3(side * 0.97, 0.64, z), bottom, 0.055, dark);
       box(body, [0.30, 0.07, 0.24], [side * 0.86, 1.24, springZ], dark);
       const coil = new THREE.Mesh(coilGeometry, coilPaint);
       coil.position.copy(bottom);
       coil.scale.y = top.y - bottom.y;
       coil.castShadow = true;
       root.add(coil);
-      cylinder(runningGear, 0.14, 0.045, [bottom.x, bottom.y, bottom.z], dark);
+      const seat = cylinder(runningGear, 0.14, 0.045, [bottom.x, bottom.y, bottom.z], dark);
       const cap = cylinder(root, 0.14, 0.045, [top.x, top.y, top.z], silver);
       const damper = rod(root, bottom, top, 0.033, silver);
-      springs.push({ mesh: coil, cap, damper, bottom, top });
+      springs.push({ mesh: coil, cap, damper, arm, seat, bottom, top, local: new THREE.Vector3(side * 0.97, 1.22, springZ) });
     }
   }
   const spare = wheelSet(1);
@@ -340,13 +342,16 @@ export function createVehicle(makeLabel = labelTexture) {
   let design: CarDesign = { ...DEFAULT_DESIGN };
   let rideLift = 0;
   let radiusDelta = 0;
-  let lastPose: CarPose = { doors: 0, hood: 0, trunk: 0, lights: false, compression: 0 };
+  let wheelRadius = 0.60;
+  let lastGround: WheelGround = [0, 0, 0, 0];
+  let lastPose: CarPose = { doors: 0, hood: 0, trunk: 0, lights: false, compression: 0, distance: 0 };
 
   function applyDesign(next: CarDesign): void {
     design = { ...next };
     const { wheel: setting, lift } = designMeasurements(design);
     rideLift = lift;
     radiusDelta = setting.radius - 0.60;
+    wheelRadius = setting.radius;
     paint.color.set(PAINTS.find((item) => item.id === design.paint)!.color);
     runningGear.position.y = radiusDelta;
     const scale = setting.radius / 0.60;
@@ -364,7 +369,6 @@ export function createVehicle(makeLabel = labelTexture) {
       arch.bridge.position.set(arch.side * (1 + setting.track - 0.11) / 2, 0.60 + 0.78 * scale, arch.mesh.position.z);
       arch.bridge.scale.x = setting.track - 0.95;
     }
-    for (const axle of axles) axle.scale.y = setting.track / 1.19;
     cargo.visible = design.roof === 'cargo';
     tent.visible = design.roof === 'tent';
     const stepY = 0.80 - lift * 0.7;
@@ -374,24 +378,46 @@ export function createVehicle(makeLabel = labelTexture) {
       const height = sillBottom - stepY + 0.03;
       step.brackets.forEach((bracket) => { bracket.scale.y = height; bracket.position.y = height / 2; });
     }
-    applyPose(lastPose);
+    applyPose(lastPose, lastGround);
   }
 
-  function applyPose(pose: CarPose): void {
+  const up = new THREE.Vector3(0, 1, 0);
+  const direction = new THREE.Vector3();
+  /**
+   * `ground` is the road height under each wheel (front-left, front-right, rear-left, rear-right).
+   * Wheels follow their own patch of ground; the body rides on the average and tilts with the differences.
+   */
+  function applyPose(pose: CarPose, ground: WheelGround = [0, 0, 0, 0]): void {
     lastPose = { ...pose };
-    body.position.y = radiusDelta + rideLift - pose.compression;
+    lastGround = [ground[0], ground[1], ground[2], ground[3]];
+    const average = (ground[0] + ground[1] + ground[2] + ground[3]) / 4;
+    const pitch = Math.atan2((ground[0] + ground[1]) / 2 - (ground[2] + ground[3]) / 2, 2.7);
+    const roll = Math.atan2((ground[1] + ground[3]) / 2 - (ground[0] + ground[2]) / 2, 2.38);
+    body.position.y = radiusDelta + rideLift - pose.compression + average;
+    body.rotation.set(pitch, 0, roll);
+    body.updateMatrix();
+    wheels.forEach((mount, index) => {
+      mount.position.y = 0.60 + ground[index];
+      mount.rotation.x = -pose.distance / wheelRadius;
+    });
+    setRod(axles[0], wheels[0].position, wheels[1].position);
+    setRod(axles[1], wheels[2].position, wheels[3].position);
     doorPivots[0].rotation.y = -pose.doors * 1.22;
     doorPivots[1].rotation.y = pose.doors * 1.22;
     hoodPivot.rotation.x = pose.hood * 1.13;
     trunkPivot.rotation.y = pose.trunk * 1.52;
-    for (const spring of springs) {
-      spring.bottom.y = 0.64 + radiusDelta;
-      spring.mesh.position.y = spring.bottom.y;
-      spring.top.y = 1.22 + radiusDelta + rideLift - pose.compression;
-      spring.mesh.scale.y = spring.top.y - spring.bottom.y;
+    springs.forEach((spring, index) => {
+      spring.arm.position.y = 0.64 + ground[index];
+      spring.seat.position.y = 0.64 + ground[index];
+      spring.bottom.y = 0.64 + radiusDelta + ground[index];
+      spring.top.copy(spring.local).applyMatrix4(body.matrix);
+      direction.subVectors(spring.top, spring.bottom);
+      spring.mesh.position.copy(spring.bottom);
+      spring.mesh.scale.y = direction.length();
+      spring.mesh.quaternion.setFromUnitVectors(up, direction.normalize());
       spring.cap.position.copy(spring.top);
       setRod(spring.damper, spring.bottom, spring.top);
-    }
+    });
     if (lampsOn !== pose.lights) {
       lampsOn = pose.lights;
       headlamp.emissiveIntensity = lampsOn ? 3.0 : 0;
@@ -406,7 +432,10 @@ export function createVehicle(makeLabel = labelTexture) {
     return {
       bodyY: body.position.y,
       wheelCenters: wheels.map((item) => item.getWorldPosition(new THREE.Vector3()).toArray()),
-      springLengths: springs.map((spring) => spring.top.y - spring.bottom.y),
+      springLengths: springs.map((spring) => spring.top.distanceTo(spring.bottom)),
+      bodyPitch: body.rotation.x,
+      bodyRoll: body.rotation.z,
+      wheelSpin: wheels[0].rotation.x,
       doorAngles: doorPivots.map((pivot) => pivot.rotation.y),
       hoodAngle: hoodPivot.rotation.x,
       trunkAngle: trunkPivot.rotation.y,

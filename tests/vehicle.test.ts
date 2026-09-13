@@ -8,13 +8,13 @@ import { DEFAULT_DESIGN, PAINTS, WHEELS, HEIGHTS, ROOFS } from '../src/customiza
 function makeRig() {
   return createVehicle(() => new THREE.CanvasTexture({ width: 1, height: 1 } as HTMLCanvasElement));
 }
-const closed = { doors: 0, hood: 0, trunk: 0, lights: false, compression: 0 };
+const closed = { doors: 0, hood: 0, trunk: 0, lights: false, compression: 0, distance: 0 };
 
 test('compression moves the body and shortens every spring while all wheel centers stay fixed', () => {
   const rig = makeRig();
   rig.applyPose(closed);
   const before = rig.inspect();
-  rig.applyPose({ doors: 1, hood: 1, trunk: 1, lights: true, compression: 0.24 });
+  rig.applyPose({ ...closed, doors: 1, hood: 1, trunk: 1, lights: true, compression: 0.24 });
   const after = rig.inspect();
   assert.deepEqual(after.wheelCenters, before.wheelCenters);
   assert.ok(Math.abs(after.bodyY - before.bodyY + 0.24) < 1e-9);
@@ -49,7 +49,7 @@ test('restoring the pose after combined actions restores actual geometry and lam
   const rig = makeRig();
   rig.applyPose(closed);
   const original = rig.inspect();
-  rig.applyPose({ doors: 0.6, hood: 1, trunk: 0.8, lights: true, compression: -0.04 });
+  rig.applyPose({ ...closed, doors: 0.6, hood: 1, trunk: 0.8, lights: true, compression: -0.04 });
   rig.applyPose(closed);
   assert.deepEqual(rig.inspect(), original);
 });
@@ -59,7 +59,7 @@ test('every wheel, ride height and roof combination keeps wheel contact and cohe
   for (const wheel of WHEELS) for (const height of HEIGHTS) for (const roof of ROOFS) {
     rig.applyDesign({ ...DEFAULT_DESIGN, wheels: wheel.id, height: height.id, roof: roof.id });
     for (const compression of [0, 0.24, -0.055]) {
-      rig.applyPose({ doors: 1, hood: 1, trunk: 1, lights: true, compression });
+      rig.applyPose({ ...closed, doors: 1, hood: 1, trunk: 1, lights: true, compression });
       const actual = rig.inspect();
       assert.ok(Math.abs(actual.bodyY - (wheel.radius - 0.60 + height.lift - compression)) < 1e-9);
       actual.wheelCenters.forEach((center, i) => {
@@ -87,7 +87,7 @@ test('changing paint updates every opening panel; customization preserves an in-
     return result;
   };
   const geometryIds = ids();
-  const pose = { doors: 0.5, hood: 0.6, trunk: 0.7, lights: true, compression: 0.16 };
+  const pose = { ...closed, doors: 0.5, hood: 0.6, trunk: 0.7, lights: true, compression: 0.16 };
   rig.applyPose(pose);
   for (const paint of PAINTS) {
     rig.applyDesign({ ...DEFAULT_DESIGN, paint: paint.id, height: 'high', roof: 'tent', wheels: 'crawler' });
@@ -117,4 +117,46 @@ test('side steps appear only when the chassis is raised and hang below the sill 
       assert.ok(state.sideSteps.y < 1.26 - 0.3, 'step must hang clearly below the door sill');
     }
   }
+});
+
+test('each wheel follows its own ground height; the body rides the average and tilts toward the higher side', () => {
+  const rig = makeRig();
+  for (const wheel of WHEELS) for (const height of HEIGHTS) {
+    rig.applyDesign({ ...DEFAULT_DESIGN, wheels: wheel.id, height: height.id });
+    rig.applyPose(closed);
+    const flat = rig.inspect();
+    assert.equal(flat.bodyPitch, 0);
+    assert.equal(flat.bodyRoll, 0);
+
+    const frontUp = [0.3, 0.3, 0, 0] as const;
+    rig.applyPose(closed, [...frontUp]);
+    const pitched = rig.inspect();
+    pitched.wheelCenters.forEach((center, i) => {
+      assert.ok(Math.abs(center[1] - (flat.wheelCenters[i][1] + frontUp[i])) < 1e-9, wheel.id + ' wheel ' + i);
+    });
+    assert.ok(Math.abs(pitched.bodyY - (flat.bodyY + 0.15)) < 1e-9);
+    assert.ok(pitched.bodyPitch > 0.05 && pitched.bodyRoll === 0);
+    pitched.springLengths.forEach((length) => assert.ok(length > 0.3 && length < 1.2, 'spring ' + length));
+
+    rig.applyPose(closed, [0, 0.2, 0, 0.2]);
+    const rolled = rig.inspect();
+    assert.ok(rolled.bodyRoll > 0.05 && rolled.bodyPitch === 0);
+    assert.ok(Math.abs(rolled.bodyY - (flat.bodyY + 0.1)) < 1e-9);
+
+    rig.applyPose(closed);
+    assert.deepEqual(rig.inspect(), flat);
+  }
+});
+
+test('wheels spin with distance according to their own radius; the spare does not', () => {
+  const rig = makeRig();
+  rig.applyDesign({ ...DEFAULT_DESIGN, wheels: 'trail' });
+  rig.applyPose({ ...closed, distance: 3 });
+  const trail = rig.inspect().wheelSpin;
+  assert.ok(Math.abs(trail + 3 / 0.60) < 1e-9);
+  rig.applyDesign({ ...DEFAULT_DESIGN, wheels: 'road' });
+  const road = rig.inspect().wheelSpin;
+  assert.ok(Math.abs(road) > Math.abs(trail));
+  const spare = rig.root.getObjectByName('trunk-hinge')!.children.find((child) => child.children.length === WHEELS.length)!;
+  assert.equal(spare.rotation.x, 0);
 });

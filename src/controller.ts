@@ -7,6 +7,8 @@ export interface CarPose {
   trunk: number;
   lights: boolean;
   compression: number;
+  /** Distance driven during a trip, in world units; drives wheel rotation. */
+  distance: number;
 }
 
 export interface CarState {
@@ -21,7 +23,7 @@ const smoothstep = (value: number) => value * value * (3 - 2 * value);
 
 /** Owns independent part targets and one finite, repeatable suspension cycle. */
 export class CarController {
-  readonly pose: CarPose = { doors: 0, hood: 0, trunk: 0, lights: false, compression: 0 };
+  readonly pose: CarPose = { doors: 0, hood: 0, trunk: 0, lights: false, compression: 0, distance: 0 };
   private targets = { doors: false, hood: false, trunk: false };
   private suspensionTime: number | null = null;
   private phase: SuspensionPhase = 'idle';
@@ -50,7 +52,7 @@ export class CarController {
 
   reset(): void {
     this.targets = { doors: false, hood: false, trunk: false };
-    Object.assign(this.pose, { doors: 0, hood: 0, trunk: 0, lights: false, compression: 0 });
+    Object.assign(this.pose, { doors: 0, hood: 0, trunk: 0, lights: false, compression: 0, distance: 0 });
     this.suspensionTime = null;
     this.phase = 'idle';
   }

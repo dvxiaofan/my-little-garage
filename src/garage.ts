@@ -287,7 +287,7 @@ export class Garage {
     this.lastTime = time;
     this.controller.update(dt);
     const pose = this.controller.pose;
-    const nextPoseKey = [pose.doors, pose.hood, pose.trunk, Number(pose.lights), pose.compression].join(',');
+    const nextPoseKey = [pose.doors, pose.hood, pose.trunk, Number(pose.lights), pose.compression, pose.distance].join(',');
     if (nextPoseKey !== this.poseKey) {
       this.poseKey = nextPoseKey;
       this.vehicle.applyPose(pose);
