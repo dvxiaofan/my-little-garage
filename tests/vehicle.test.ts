@@ -26,7 +26,7 @@ test('compression moves the body and shortens every spring while all wheel cente
   assert.ok(after.headlampEmission > 0);
 });
 
-test('doors open outwards; hood rises; rear hatch opens upwards and toward the back', () => {
+test('doors open outwards; hood rises; rear door swings sideways toward the back without lifting', () => {
   const rig = makeRig();
   const names = ['left-door-hinge', 'right-door-hinge', 'hood-hinge', 'trunk-hinge'];
   const centers = () => {
@@ -40,8 +40,9 @@ test('doors open outwards; hood rises; rear hatch opens upwards and toward the b
   assert.ok(after[0].x < before[0].x - 0.3);
   assert.ok(after[1].x > before[1].x + 0.3);
   assert.ok(after[2].y > before[2].y + 0.3);
-  assert.ok(after[3].y > before[3].y + 0.5);
+  assert.ok(Math.abs(after[3].y - before[3].y) < 1e-9);
   assert.ok(after[3].z > before[3].z + 0.5);
+  assert.ok(after[3].x > before[3].x + 0.5);
 });
 
 test('restoring the pose after combined actions restores actual geometry and lamp materials', () => {
@@ -96,9 +97,24 @@ test('changing paint updates every opening panel; customization preserves an in-
     }
     const state = rig.inspect();
     assert.equal(state.doorAngles[0], -pose.doors * 1.22);
-    assert.equal(state.trunkAngle, -pose.trunk * 1.52);
+    assert.equal(state.trunkAngle, pose.trunk * 1.52);
     assert.equal(state.lampsOn, true);
     assert.ok(Math.abs(state.bodyY - (0.12 + 0.34 - pose.compression)) < 1e-9);
   }
   assert.deepEqual(ids(), geometryIds);
+});
+
+test('side steps appear only when the chassis is raised and hang below the sill at a steady height above ground', () => {
+  const rig = makeRig();
+  for (const wheel of WHEELS) for (const height of HEIGHTS) {
+    rig.applyDesign({ ...DEFAULT_DESIGN, wheels: wheel.id, height: height.id });
+    rig.applyPose(closed);
+    const state = rig.inspect();
+    assert.equal(state.sideSteps.visible, height.lift > 0, wheel.id + '/' + height.id);
+    if (height.lift > 0) {
+      const worldY = state.bodyY + state.sideSteps.y;
+      assert.ok(worldY > 0.55 && worldY < 1.0, 'step world height ' + worldY);
+      assert.ok(state.sideSteps.y < 0.92, 'step must hang below the door sill');
+    }
+  }
 });

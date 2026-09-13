@@ -186,6 +186,20 @@ export function createVehicle(makeLabel = labelTexture) {
     doorPivots.push(pivot);
   }
 
+  // Side steps drop out under the doors when the chassis is raised, so the driver can still climb in.
+  const sideSteps: Array<{ group: THREE.Group; brackets: THREE.Mesh[]; side: number }> = [];
+  for (const side of [-1, 1]) {
+    const group = new THREE.Group();
+    group.name = side < 0 ? 'left-side-step' : 'right-side-step';
+    box(group, [0.17, 0.045, 1.00], [side * 1.20, 0, 0], dark, 0.02);
+    for (const z of [-0.36, -0.12, 0.12, 0.36]) box(group, [0.15, 0.014, 0.05], [side * 1.20, 0.028, z], silver, 0.005);
+    const brackets = [-0.34, 0.34].map((z) => rod(body, new THREE.Vector3(side * 1.08, 0.92, z), new THREE.Vector3(side * 1.16, 0.70, z), 0.03, dark));
+    group.visible = false;
+    brackets.forEach((item) => { item.visible = false; });
+    body.add(group);
+    sideSteps.push({ group, brackets, side });
+  }
+
   const hoodPivot = new THREE.Group();
   hoodPivot.name = 'hood-hinge';
   hoodPivot.position.set(0, 1.825, -0.745);
@@ -194,21 +208,24 @@ export function createVehicle(makeLabel = labelTexture) {
   for (const x of [-0.49, 0.49]) box(hoodPivot, [0.065, 0.022, 0.84], [x, 0.063, -0.66], paint, 0.01);
   box(hoodPivot, [1.2, 0.045, 0.82], [0, -0.079, -0.66], dark);
 
-  // A lifting rear hatch makes the storage space visible from behind.
+  // The cargo floor and a few boxes are visible once the rear door swings open.
   box(body, [1.72, 0.055, 1.19], [0, 1.49, 1.23], seat);
   box(body, [0.65, 0.28, 0.48], [-0.38, 1.66, 1.30], cream, 0.035);
   for (const x of [-0.61, -0.37, -0.14]) box(body, [0.045, 0.02, 0.48], [x, 1.809, 1.30], fabric, 0.008);
   box(body, [0.35, 0.24, 0.38], [0.41, 1.64, 1.43], dark);
+  // Side-hinged rear door like a real off-roader: hinges on the right edge, spare tyre carried on the door.
+  const hingeX = 0.885;
   const trunkPivot = new THREE.Group();
   trunkPivot.name = 'trunk-hinge';
-  trunkPivot.position.set(0, 2.67, 1.96);
+  trunkPivot.position.set(hingeX, 2.67, 1.96);
   body.add(trunkPivot);
-  box(trunkPivot, [1.77, 0.54, 0.11], [0, -0.99, 0], paint, 0.035);
-  box(trunkPivot, [1.59, 0.60, 0.027], [0, -0.345, 0.014], glass, 0.009);
-  for (const x of [-0.858, 0.858]) box(trunkPivot, [0.07, 0.65, 0.08], [x, -0.335, 0], paint);
-  box(trunkPivot, [1.77, 0.065, 0.10], [0, -0.035, 0], paint);
-  box(trunkPivot, [1.77, 0.06, 0.12], [0, -0.66, 0], dark);
-  box(trunkPivot, [0.23, 0.065, 0.085], [0.59, -0.88, 0.084], dark, 0.02);
+  box(trunkPivot, [1.77, 0.54, 0.11], [-hingeX, -0.99, 0], paint, 0.035);
+  box(trunkPivot, [1.59, 0.60, 0.027], [-hingeX, -0.345, 0.014], glass, 0.009);
+  for (const x of [-0.858, 0.858]) box(trunkPivot, [0.07, 0.65, 0.08], [x - hingeX, -0.335, 0], paint);
+  box(trunkPivot, [1.77, 0.065, 0.10], [-hingeX, -0.035, 0], paint);
+  box(trunkPivot, [1.77, 0.06, 0.12], [-hingeX, -0.66, 0], dark);
+  box(trunkPivot, [0.085, 0.065, 0.23], [-hingeX - 0.70, -0.88, 0.084], dark, 0.02);
+  for (const y of [-0.15, -0.85]) box(body, [0.07, 0.17, 0.09], [hingeX + 0.06, 2.67 + y, 1.985], dark, 0.02);
   box(body, [2.34, 0.22, 0.29], [0, 1.16, 2.08], dark, 0.06);
   for (const side of [-1, 1]) {
     box(body, [0.19, 0.34, 0.12], [side * 1.00, 1.72, 2.014], dark);
@@ -309,7 +326,7 @@ export function createVehicle(makeLabel = labelTexture) {
   const spare = wheelSet(1);
   spare.scale.setScalar(0.72);
   spare.rotation.y = -Math.PI / 2;
-  spare.position.set(0, -0.77, 0.28);
+  spare.position.set(-hingeX, -0.77, 0.28);
   trunkPivot.add(spare);
   const plate = new THREE.Mesh(new THREE.PlaneGeometry(0.58, 0.20), new THREE.MeshBasicMaterial({ map: makeLabel('LITTLE', '#eee7d7', '#34413d', 384, 112) }));
   plate.position.set(0, 1.185, 2.231);
@@ -349,6 +366,16 @@ export function createVehicle(makeLabel = labelTexture) {
     for (const axle of axles) axle.scale.y = setting.track / 1.19;
     cargo.visible = design.roof === 'cargo';
     tent.visible = design.roof === 'tent';
+    const stepY = 0.86 - lift * 1.05;
+    for (const step of sideSteps) {
+      step.group.visible = lift > 0;
+      step.group.position.y = stepY;
+      step.brackets.forEach((bracket, index) => {
+        bracket.visible = lift > 0;
+        const z = index === 0 ? -0.34 : 0.34;
+        setRod(bracket, new THREE.Vector3(step.side * 1.08, 0.92, z), new THREE.Vector3(step.side * 1.18, stepY + 0.02, z));
+      });
+    }
     applyPose(lastPose);
   }
 
@@ -358,7 +385,7 @@ export function createVehicle(makeLabel = labelTexture) {
     doorPivots[0].rotation.y = -pose.doors * 1.22;
     doorPivots[1].rotation.y = pose.doors * 1.22;
     hoodPivot.rotation.x = pose.hood * 1.13;
-    trunkPivot.rotation.x = -pose.trunk * 1.52;
+    trunkPivot.rotation.y = pose.trunk * 1.52;
     for (const spring of springs) {
       spring.bottom.y = 0.64 + radiusDelta;
       spring.mesh.position.y = spring.bottom.y;
@@ -384,7 +411,7 @@ export function createVehicle(makeLabel = labelTexture) {
       springLengths: springs.map((spring) => spring.top.y - spring.bottom.y),
       doorAngles: doorPivots.map((pivot) => pivot.rotation.y),
       hoodAngle: hoodPivot.rotation.x,
-      trunkAngle: trunkPivot.rotation.x,
+      trunkAngle: trunkPivot.rotation.y,
       lampsOn,
       headlampEmission: headlamp.emissiveIntensity,
       design: { ...design },
@@ -392,6 +419,7 @@ export function createVehicle(makeLabel = labelTexture) {
       wheelRadii: wheels.map((wheel) => wheel.scale.y * 0.60),
       wheelStyles: wheelStyles.map((variants) => WHEELS.filter((item) => variants[item.id].visible).map((item) => item.id)),
       roof: { cargo: cargo.visible, tent: tent.visible },
+      sideSteps: { visible: sideSteps[0].group.visible, y: sideSteps[0].group.position.y },
     };
   }
 
