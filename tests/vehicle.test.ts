@@ -42,7 +42,7 @@ test('doors open outwards; hood rises; rear door swings sideways toward the back
   assert.ok(after[2].y > before[2].y + 0.3);
   assert.ok(Math.abs(after[3].y - before[3].y) < 1e-9);
   assert.ok(after[3].z > before[3].z + 0.5);
-  assert.ok(after[3].x > before[3].x + 0.5);
+  assert.ok(after[3].x < before[3].x - 0.5);
 });
 
 test('restoring the pose after combined actions restores actual geometry and lamp materials', () => {
@@ -97,7 +97,8 @@ test('changing paint updates every opening panel; customization preserves an in-
     }
     const state = rig.inspect();
     assert.equal(state.doorAngles[0], -pose.doors * 1.22);
-    assert.equal(state.trunkAngle, pose.trunk * 1.52);
+    assert.equal(state.doorAngles[3], pose.doors * 1.22);
+    assert.equal(state.trunkAngle, -pose.trunk * 1.52);
     assert.equal(state.lampsOn, true);
     assert.ok(Math.abs(state.bodyY - (0.12 + 0.34 - pose.compression)) < 1e-9);
   }

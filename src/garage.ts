@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { CarController, type CarState, type OpenPart } from './controller.ts';
-import { createVehicle, type WheelGround } from './vehicle.ts';
+import { WHEEL_Z, createVehicle, type WheelGround } from './vehicle.ts';
 import { createRoad, roadHeight, type Road } from './terrain.ts';
 import { designMeasurements, type CarDesign } from './customization.ts';
 
@@ -16,10 +16,10 @@ interface GarageOptions {
 }
 
 const viewPositions: Record<Exclude<ViewName, 'free'>, [number, number, number]> = {
-  home: [-5.7, 4.0, -6.6],
-  front: [0, 3.2, -8.4],
-  side: [-9.4, 3.4, 0.15],
-  rear: [6.05, 4.13, 7.56],
+  home: [-6.4, 4.4, -7.4],
+  front: [0, 3.4, -9.6],
+  side: [-10.8, 3.6, 0.3],
+  rear: [6.8, 4.5, 8.5],
 };
 
 export class Garage {
@@ -48,7 +48,7 @@ export class Garage {
   private readonly road: Road;
   private readonly platform: THREE.Object3D[] = [];
   private tripActive = false;
-  private track = 1.19;
+  private track = 1.12;
 
   constructor(host: HTMLElement, options: GarageOptions) {
     this.host = host;
@@ -189,8 +189,8 @@ export class Garage {
   private groundUnderWheels(distance: number): WheelGround {
     // Front-left, front-right, rear-left, rear-right. Front wheels sit at negative z; the road ahead is distance + 1.35.
     return [
-      roadHeight(distance + 1.35, -this.track), roadHeight(distance + 1.35, this.track),
-      roadHeight(distance - 1.35, -this.track), roadHeight(distance - 1.35, this.track),
+      roadHeight(distance + WHEEL_Z, -this.track), roadHeight(distance + WHEEL_Z, this.track),
+      roadHeight(distance - WHEEL_Z, -this.track), roadHeight(distance - WHEEL_Z, this.track),
     ];
   }
 
@@ -289,8 +289,8 @@ export class Garage {
   }
 
   private updateZoomLimits(): void {
-    this.controls.minDistance = 6.0 * this.fit * this.designFit;
-    this.controls.maxDistance = 13 * this.fit * this.designFit;
+    this.controls.minDistance = 6.8 * this.fit * this.designFit;
+    this.controls.maxDistance = 15 * this.fit * this.designFit;
   }
 
   private resize = (): void => {

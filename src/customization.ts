@@ -1,15 +1,15 @@
 export const PAINTS = [
-  { id: 'orange', label: '橘子橙', color: '#e98246' },
+  { id: 'orange', label: '大地金', color: '#cd9d46' },
   { id: 'blue', label: '天空蓝', color: '#6196ba' },
   { id: 'green', label: '森林绿', color: '#6b9271' },
   { id: 'red', label: '番茄红', color: '#c8594a' },
-  { id: 'yellow', label: '太阳黄', color: '#e5ba54' },
+  { id: 'yellow', label: '太阳黄', color: '#e8c04a' },
 ] as const;
 
 export const WHEELS = [
-  { id: 'road', label: '公路轮', radius: 0.52, track: 1.19, width: 0.94 },
-  { id: 'trail', label: '越野轮', radius: 0.60, track: 1.19, width: 1 },
-  { id: 'crawler', label: '大脚轮', radius: 0.72, track: 1.38, width: 1.1 },
+  { id: 'road', label: '公路轮', radius: 0.52, track: 1.12, width: 0.94 },
+  { id: 'trail', label: '越野轮', radius: 0.60, track: 1.12, width: 1 },
+  { id: 'crawler', label: '大脚轮', radius: 0.72, track: 1.30, width: 1.1 },
 ] as const;
 
 export const HEIGHTS = [
@@ -75,7 +75,7 @@ export function sameDesign(a: CarDesign, b: CarDesign): boolean {
 }
 
 export function suggestName(design: CarDesign, turn: number): string {
-  const colors: Record<PaintId, string> = { orange: '橘子', blue: '蓝天', green: '森林', red: '红豆', yellow: '太阳' };
+  const colors: Record<PaintId, string> = { orange: '金沙', blue: '蓝天', green: '森林', red: '红豆', yellow: '太阳' };
   const endings = design.roof === 'tent' ? ['露营家', '旅行家', '探险号']
     : design.wheels === 'crawler' ? ['大脚怪', '登山家', '小巨人'] : ['小勇士', '探险家', '小闪电'];
   return colors[design.paint] + endings[turn % endings.length];

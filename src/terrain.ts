@@ -75,10 +75,10 @@ export function createRoad(): Road {
     const track = new THREE.PlaneGeometry(0.7, length, 1, segmentsZ);
     track.rotateX(-Math.PI / 2);
     const p = track.attributes.position as THREE.BufferAttribute;
-    for (let i = 0; i < p.count; i++) p.setY(i, roadHeight(-p.getZ(i), side * 1.19) + 0.012);
+    for (let i = 0; i < p.count; i++) p.setY(i, roadHeight(-p.getZ(i), side * 1.12) + 0.012);
     track.computeVertexNormals();
     const mesh = new THREE.Mesh(track, trackMaterial);
-    mesh.position.set(side * 1.19, ROAD_Y, 0);
+    mesh.position.set(side * 1.12, ROAD_Y, 0);
     mesh.receiveShadow = true;
     root.add(mesh);
   }
