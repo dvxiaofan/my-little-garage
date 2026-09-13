@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import * as THREE from 'three';
 import test from 'node:test';
 import { ROAD_FLAT, ROAD_LENGTH, ROAD_MAX_HEIGHT, createRoad, roadHeight } from '../src/terrain.ts';
 import { TRIP_DISTANCE } from '../src/controller.ts';
@@ -43,4 +44,17 @@ test('road mesh scrolls one lap length and wraps', () => {
   road.setDistance(ROAD_LENGTH / 2);
   assert.ok(Math.abs(road.root.position.z - ROAD_LENGTH / 2) < 1e-9);
   assert.ok(road.root.children.length >= 3);
+});
+
+test('the ground mesh encodes roadHeight(distance - z) once scrolled', () => {
+  const road = createRoad();
+  const ground = road.root.children[0] as THREE.Mesh;
+  const p = ground.geometry.attributes.position as THREE.BufferAttribute;
+  let checked = 0;
+  for (let i = 0; i < p.count; i += 97) {
+    if (Math.abs(p.getX(i)) > 1) continue;
+    assert.ok(Math.abs(p.getY(i) - roadHeight(-p.getZ(i), p.getX(i))) < 1e-5);
+    checked++;
+  }
+  assert.ok(checked > 5);
 });

@@ -2,7 +2,8 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { CarController, type CarState, type OpenPart } from './controller.ts';
-import { createVehicle } from './vehicle.ts';
+import { createVehicle, type WheelGround } from './vehicle.ts';
+import { createRoad, roadHeight, type Road } from './terrain.ts';
 import { designMeasurements, type CarDesign } from './customization.ts';
 
 export type ViewName = 'home' | 'front' | 'side' | 'rear' | 'free';
@@ -44,6 +45,10 @@ export class Garage {
   private cameraMove: { start: THREE.Vector3; end: THREE.Vector3; elapsed: number } | null = null;
   private dirty = true;
   private hasRendered = false;
+  private readonly road: Road;
+  private readonly platform: THREE.Object3D[] = [];
+  private tripActive = false;
+  private track = 1.19;
 
   constructor(host: HTMLElement, options: GarageOptions) {
     this.host = host;
@@ -114,6 +119,10 @@ export class Garage {
     rim.rotation.x = -Math.PI / 2;
     rim.position.y = -0.008;
     this.scene.add(rim, this.vehicle.root);
+    this.platform.push(platform, rim);
+    this.road = createRoad();
+    this.road.root.visible = false;
+    this.scene.add(this.road.root);
 
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.target.set(0, 1.02, 0);
@@ -158,6 +167,33 @@ export class Garage {
     return started;
   }
 
+  /** Drive one lap of the trail without leaving the stage: the road scrolls under the car. */
+  startDrive(): boolean {
+    const started = this.controller.startDrive();
+    this.syncTrip();
+    this.dirty = true;
+    this.publishState();
+    return started;
+  }
+
+  private syncTrip(): void {
+    const active = this.controller.state.driving !== 'idle';
+    if (active === this.tripActive) return;
+    this.tripActive = active;
+    this.road.root.visible = active;
+    for (const item of this.platform) item.visible = !active;
+    this.renderer.shadowMap.needsUpdate = true;
+    this.dirty = true;
+  }
+
+  private groundUnderWheels(distance: number): WheelGround {
+    // Front-left, front-right, rear-left, rear-right. Front wheels sit at negative z; the road ahead is distance + 1.35.
+    return [
+      roadHeight(distance + 1.35, -this.track), roadHeight(distance + 1.35, this.track),
+      roadHeight(distance - 1.35, -this.track), roadHeight(distance - 1.35, this.track),
+    ];
+  }
+
   setView(view: Exclude<ViewName, 'free'>): void {
     // Flush residual orbit damping before beginning a preset camera move.
     const damping = this.controls.enableDamping;
@@ -172,6 +208,7 @@ export class Garage {
 
   reset(): void {
     this.controller.reset();
+    this.syncTrip();
     this.vehicle.applyPose(this.controller.pose);
     this.setView('home');
     this.dirty = true;
@@ -180,7 +217,8 @@ export class Garage {
 
   applyDesign(design: CarDesign): void {
     this.vehicle.applyDesign(design);
-    const { extraHeight } = designMeasurements(design);
+    const { extraHeight, wheel } = designMeasurements(design);
+    this.track = wheel.track;
     const previousTarget = this.controls.target.clone();
     const previousFit = this.designFit;
     this.designFit = 1 + Math.max(0, extraHeight) * 0.17;
@@ -204,6 +242,8 @@ export class Garage {
       camera: this.camera.position.toArray(),
       cameraMoving: this.cameraMove !== null,
       view: this.view,
+      tripProgress: this.controller.tripProgress,
+      roadVisible: this.road.root.visible,
       ready: this.ready,
       rendered: this.hasRendered,
       renderer: {
@@ -288,9 +328,15 @@ export class Garage {
     this.controller.update(dt);
     const pose = this.controller.pose;
     const nextPoseKey = [pose.doors, pose.hood, pose.trunk, Number(pose.lights), pose.compression, pose.distance].join(',');
+    this.syncTrip();
     if (nextPoseKey !== this.poseKey) {
       this.poseKey = nextPoseKey;
-      this.vehicle.applyPose(pose);
+      if (this.tripActive) {
+        this.road.setDistance(pose.distance);
+        this.vehicle.applyPose(pose, this.groundUnderWheels(pose.distance));
+      } else {
+        this.vehicle.applyPose(pose);
+      }
       this.renderer.shadowMap.needsUpdate = true;
       this.dirty = true;
     }

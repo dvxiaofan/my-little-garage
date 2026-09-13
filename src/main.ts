@@ -7,7 +7,7 @@ import { Workshop, workshopMarkup, collectionMarkup } from './workshop.ts';
 
 declare global {
   interface Window {
-    __garageTest?: { snapshot: () => ReturnType<Garage['inspect']> };
+    __garageTest?: { snapshot: () => ReturnType<Garage['inspect']>; drive: () => boolean };
   }
 }
 
@@ -127,7 +127,7 @@ requestAnimationFrame(() => {
       },
     });
     workshop.applyDraft();
-    if (import.meta.env.DEV) window.__garageTest = { snapshot: () => garage!.inspect() };
+    if (import.meta.env.DEV) window.__garageTest = { snapshot: () => garage!.inspect(), drive: () => garage!.startDrive() };
   } catch (error) {
     console.error('Unable to open the 3D garage:', error);
     showError();
