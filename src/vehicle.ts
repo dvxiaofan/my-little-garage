@@ -219,25 +219,26 @@ export function createVehicle(makeLabel = labelTexture) {
     }
   }
 
-  // Rear: fixed quarters carry the vertical tail lamps; the narrow tailgate swings sideways carrying the spare.
+  // Rear: fixed quarters carry the vertical tail lamps; the narrow tailgate hinges on the right-hand edge and
+  // swings out to the right, carrying the spare proud of the right-hand side with its handle on the free left edge.
   box(body, [1.94, 0.055, 1.10], [0, 1.49, 1.85], seat);
   box(body, [0.65, 0.28, 0.48], [-0.42, 1.66, 1.95], cream, 0.035);
   for (const x of [-0.65, -0.41, -0.18]) box(body, [0.045, 0.02, 0.48], [x, 1.809, 1.95], fabric, 0.008);
   box(body, [0.35, 0.24, 0.38], [0.45, 1.64, 2.05], dark);
-  const hingeX = -0.96;
+  const hingeX = 0.96;
   const doorHalf = 0.94;
   const trunkPivot = new THREE.Group();
   trunkPivot.name = 'trunk-hinge';
   trunkPivot.position.set(hingeX, 2.67, REAR);
   body.add(trunkPivot);
-  box(trunkPivot, [1.86, 0.52, 0.11], [doorHalf, -0.91, 0], paint, 0.035);
-  box(trunkPivot, [1.70, 0.58, 0.027], [doorHalf, -0.34, 0.014], glass, 0.009);
-  for (const x of [0.06, 2 * doorHalf - 0.06]) box(trunkPivot, [0.09, 0.66, 0.08], [x, -0.33, 0], dark);
-  box(trunkPivot, [1.86, 0.065, 0.09], [doorHalf, -0.03, 0], dark);
-  box(trunkPivot, [1.86, 0.06, 0.10], [doorHalf, -0.64, 0], dark);
-  box(trunkPivot, [0.06, 0.30, 0.07], [2 * doorHalf - 0.36, -0.86, 0.08], dark, 0.02);
-  box(trunkPivot, [0.03, 0.22, 0.04], [2 * doorHalf - 0.36, -0.86, 0.115], silver, 0.01);
-  for (const y of [-0.15, -0.85]) box(body, [0.07, 0.17, 0.09], [hingeX - 0.06, 2.67 + y, REAR + 0.025], dark, 0.02);
+  box(trunkPivot, [1.86, 0.52, 0.11], [-doorHalf, -0.91, 0], paint, 0.035);
+  box(trunkPivot, [1.70, 0.58, 0.027], [-doorHalf, -0.34, 0.014], glass, 0.009);
+  for (const x of [-0.06, -(2 * doorHalf - 0.06)]) box(trunkPivot, [0.09, 0.66, 0.08], [x, -0.33, 0], dark);
+  box(trunkPivot, [1.86, 0.065, 0.09], [-doorHalf, -0.03, 0], dark);
+  box(trunkPivot, [1.86, 0.06, 0.10], [-doorHalf, -0.64, 0], dark);
+  box(trunkPivot, [0.06, 0.30, 0.07], [-(2 * doorHalf - 0.36), -0.86, 0.08], dark, 0.02);
+  box(trunkPivot, [0.03, 0.22, 0.04], [-(2 * doorHalf - 0.36), -0.86, 0.115], silver, 0.01);
+  for (const y of [-0.15, -0.85]) box(body, [0.07, 0.17, 0.09], [hingeX + 0.06, 2.67 + y, REAR + 0.025], dark, 0.02);
   for (const side of [-1, 1]) {
     box(body, [0.20, 0.50, 0.07], [side * 1.075, 1.76, REAR + 0.01], dark, 0.015);
     box(body, [0.15, 0.17, 0.025], [side * 1.075, 1.86, REAR + 0.045], taillamp, 0.015);
@@ -359,7 +360,7 @@ export function createVehicle(makeLabel = labelTexture) {
   const spare = wheelSet(1);
   spare.scale.setScalar(0.84);
   spare.rotation.y = -Math.PI / 2;
-  spare.position.set(doorHalf - 0.30, -0.74, 0.30);
+  spare.position.set(-(doorHalf - 0.30), -0.74, 0.30);
   trunkPivot.add(spare);
   const plate = new THREE.Mesh(new THREE.PlaneGeometry(0.58, 0.20), new THREE.MeshBasicMaterial({ map: makeLabel('LITTLE', '#eee7d7', '#34413d', 384, 112) }));
   plate.position.set(0, 1.15, REAR + 0.115);
@@ -434,7 +435,7 @@ export function createVehicle(makeLabel = labelTexture) {
     setRod(axles[1], wheels[2].position, wheels[3].position);
     doorPivots.forEach((pivot, index) => { pivot.rotation.y = doorSides[index] * pose.doors * 1.22; });
     hoodPivot.rotation.x = pose.hood * 1.13;
-    trunkPivot.rotation.y = -pose.trunk * 1.52;
+    trunkPivot.rotation.y = pose.trunk * 1.52;
     springs.forEach((spring, index) => {
       spring.arm.position.y = 0.64 + ground[index];
       spring.seat.position.y = 0.64 + ground[index];
