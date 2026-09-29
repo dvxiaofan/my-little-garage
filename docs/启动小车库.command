@@ -25,5 +25,10 @@ if [[ "$garage_page" == *"<title>小小车库"* ]]; then
   exit 0
 fi
 
-printf '小小车库准备出发。浏览器将自动打开，请保持这个窗口开启。\n'
-exec npm run dev -- --open
+printf '小小车库准备出发，固定使用 5173 端口。浏览器将自动打开，请保持这个窗口开启。\n'
+printf 'iPad 请连接同一局域网，打开下方显示的 Network 地址。\n'
+if ! npm run dev -- --open; then
+  printf '启动失败，请查看上方错误。若 5173 端口被占用，请先停止占用它的服务再重试，不会自动更换端口。\n'
+  read -r '?按回车键退出…'
+  exit 1
+fi
