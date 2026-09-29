@@ -8,7 +8,10 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "start": "node --experimental-strip-types server/index.mjs",
+    "admin": "node --experimental-strip-types server/admin.mjs",
+    "test:server": "node --experimental-strip-types --test server/*.test.mjs"
   },
   "dependencies": {
     "three": "0.186.0"
@@ -18,5 +21,8 @@
     "@types/three": "^0.185.0",
     "typescript": "^5.9.3",
     "vite": "8.3.0"
+  },
+  "engines": {
+    "node": ">=24"
   }
 }

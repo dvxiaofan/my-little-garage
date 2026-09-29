@@ -24,3 +24,9 @@ assets/
 
 # 车型参考照片（官方宣传图，有版权，仅本地建模用，不入公开仓库）
 docs/reference/
+
+# Family profiles, credentials, sessions and garage database
+data/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
