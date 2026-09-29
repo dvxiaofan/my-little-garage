@@ -58,3 +58,44 @@ test('the ground mesh encodes roadHeight(distance - z) once scrolled', () => {
   }
   assert.ok(checked > 5);
 });
+
+test('all road choices are periodic, bounded and level under all wheels at both ends', () => {
+  for (const kind of ['flat', 'hills', 'alternating'] as const) {
+    for (let z = -ROAD_LENGTH; z <= ROAD_LENGTH; z += 0.25) {
+      for (const x of [-1.38, 0, 1.38]) {
+        const height = roadHeight(z, x, kind);
+        assert.ok(Math.abs(height) <= ROAD_MAX_HEIGHT);
+        assert.ok(Math.abs(height - roadHeight(z + ROAD_LENGTH, x, kind)) < 1e-8);
+        if (kind === 'flat') assert.equal(height, 0);
+      }
+    }
+    for (const z of [-1.35, 0, 1.35, ROAD_LENGTH - 1.35, ROAD_LENGTH + 1.35]) {
+      assert.equal(Math.abs(roadHeight(z, -1.38, kind)), 0);
+      assert.equal(Math.abs(roadHeight(z, 1.38, kind)), 0);
+    }
+  }
+  assert.equal(roadHeight(20, -1.12, 'hills'), roadHeight(20, 1.12, 'hills'));
+  assert.ok(Math.abs(roadHeight(20, -1.12, 'alternating') - roadHeight(20, 1.12, 'alternating')) > 0.5);
+});
+
+test('switching roads reuses geometry and keeps ground and both visible tracks on the selected surface', () => {
+  const road = createRoad();
+  const meshes = road.root.children.slice(0, 3) as THREE.Mesh[];
+  const geometries = meshes.map((mesh) => mesh.geometry);
+  for (const kind of ['alternating', 'flat', 'hills', 'flat'] as const) {
+    road.setKind(kind);
+    for (const [index, mesh] of meshes.entries()) {
+      assert.equal(mesh.geometry, geometries[index]);
+      const p = mesh.geometry.attributes.position as THREE.BufferAttribute;
+      let checked = 0;
+      for (let i = 0; i < p.count; i += 17) {
+        const x = p.getX(i) + mesh.position.x;
+        if (Math.abs(x) > 2) continue;
+        const expected = roadHeight(-p.getZ(i), x, kind) + (index === 0 ? 0 : 0.012);
+        assert.ok(Math.abs(p.getY(i) - expected) < 1e-6);
+        checked++;
+      }
+      assert.ok(checked > 5);
+    }
+  }
+});

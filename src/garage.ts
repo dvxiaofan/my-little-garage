@@ -3,7 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { CarController, type CarState, type OpenPart } from './controller.ts';
 import { WHEEL_Z, createVehicle, type WheelGround } from './vehicle.ts';
-import { createRoad, roadHeight, type Road } from './terrain.ts';
+import { createRoad, roadHeight, DEFAULT_ROAD, type RoadKind, type Road } from './terrain.ts';
 import { designMeasurements, type CarDesign } from './customization.ts';
 
 export type ViewName = 'home' | 'front' | 'side' | 'rear' | 'free';
@@ -46,6 +46,7 @@ export class Garage {
   private dirty = true;
   private hasRendered = false;
   private readonly road: Road;
+  private roadKind: RoadKind = DEFAULT_ROAD;
   private readonly platform: THREE.Object3D[] = [];
   private tripActive = false;
   private track = 1.12;
@@ -119,7 +120,7 @@ export class Garage {
     rim.rotation.x = -Math.PI / 2;
     rim.position.y = -0.008;
     this.scene.add(rim, this.vehicle.root);
-    this.platform.push(platform, rim);
+    this.platform.push(platform, rim, floor);
     this.road = createRoad();
     this.road.root.visible = false;
     this.scene.add(this.road.root);
@@ -176,6 +177,15 @@ export class Garage {
     return started;
   }
 
+  setRoad(kind: RoadKind): boolean {
+    if (this.controller.state.driving !== 'idle') return false;
+    if (kind === this.roadKind) return true;
+    this.road.setKind(kind);
+    this.roadKind = kind;
+    this.dirty = true;
+    return true;
+  }
+
   private syncTrip(): void {
     const active = this.controller.state.driving !== 'idle';
     if (active === this.tripActive) return;
@@ -189,8 +199,8 @@ export class Garage {
   private groundUnderWheels(distance: number): WheelGround {
     // Front-left, front-right, rear-left, rear-right. Front wheels sit at negative z; the road ahead is distance + 1.35.
     return [
-      roadHeight(distance + WHEEL_Z, -this.track), roadHeight(distance + WHEEL_Z, this.track),
-      roadHeight(distance - WHEEL_Z, -this.track), roadHeight(distance - WHEEL_Z, this.track),
+      roadHeight(distance + WHEEL_Z, -this.track, this.roadKind), roadHeight(distance + WHEEL_Z, this.track, this.roadKind),
+      roadHeight(distance - WHEEL_Z, -this.track, this.roadKind), roadHeight(distance - WHEEL_Z, this.track, this.roadKind),
     ];
   }
 
@@ -244,6 +254,7 @@ export class Garage {
       view: this.view,
       tripProgress: this.controller.tripProgress,
       roadVisible: this.road.root.visible,
+      roadKind: this.roadKind,
       ready: this.ready,
       rendered: this.hasRendered,
       renderer: {

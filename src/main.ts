@@ -1,4 +1,5 @@
 import './style.css';
+import { ROAD_OPTIONS, DEFAULT_ROAD, type RoadKind } from './terrain.ts';
 import { Garage, type ViewName } from './garage.ts';
 import type { CarState, OpenPart } from './controller.ts';
 import { icon } from './icons.ts';
@@ -20,6 +21,14 @@ function partButton(part: OpenPart, label: string, glyph: string): string {
 function viewButton(view: string, label: string, glyph: string): string {
   return '<button class="view-button" data-view="' + view + '" data-car-control aria-label="' + label +
     '" aria-pressed="' + (view === 'home') + '" disabled>' + icon(glyph) + '<span>' + label + '</span></button>';
+}
+
+function roadChoices(): string {
+  return '<div class="road-choices" role="group" aria-label="选择道路">' + ROAD_OPTIONS.map((road) =>
+    '<button class="road-choice" data-road="' + road.id + '" data-car-control aria-label="' + road.label +
+    '" aria-pressed="' + (road.id === DEFAULT_ROAD) + '" disabled><svg viewBox="0 0 48 34" aria-hidden="true"><path d="' +
+    road.path + '" /></svg><span>' + road.label + '</span></button>').join('') +
+    '</div><p id="road-hint" class="road-hint" aria-live="polite">' + ROAD_OPTIONS.find((road) => road.id === DEFAULT_ROAD)!.description + '</p>';
 }
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
@@ -51,7 +60,7 @@ app.innerHTML = [
   '    </div></section>',
   '    <section class="control-section"><h3 class="section-title"><span>02</span>亮一亮</h3><button class="light-button" data-action="lights" data-car-control aria-label="车灯" aria-pressed="false" disabled><span class="light-icon">' + icon('light') + '</span><span class="button-copy"><strong>车灯</strong><small id="light-description">照亮小小的冒险</small></span><span class="toggle-track"><span></span></span></button></section>',
   '    <section class="control-section"><h3 class="section-title"><span>03</span>试一试</h3><button class="spring-button" data-action="suspension" data-car-control aria-label="压一压" aria-busy="false" disabled><span class="spring-icon">' + icon('spring') + '</span><span class="button-copy"><strong id="spring-label">压一压</strong><small id="spring-description">看看弹簧怎么动</small></span><span class="spring-arrow">' + icon('arrow') + '</span><span class="spring-progress"></span></button></section>',
-  '    <section class="control-section"><h3 class="section-title"><span>04</span>跑一跑</h3><button class="drive-button" data-action="drive" data-car-control aria-label="跑一跑" aria-busy="false" disabled><span class="drive-icon">' + icon('road') + '</span><span class="button-copy"><strong id="drive-label">跑一跑</strong><small id="drive-description">开上一段崎岖的越野路</small></span><span class="spring-arrow">' + icon('arrow') + '</span><span class="drive-progress"></span></button></section>',
+  '    <section class="control-section"><h3 class="section-title"><span>04</span>跑一跑</h3>' + roadChoices() + '<button class="drive-button" data-action="drive" data-car-control aria-label="跑一跑" aria-busy="false" disabled><span class="drive-icon">' + icon('road') + '</span><span class="button-copy"><strong id="drive-label">跑一跑</strong><small id="drive-description">开上一段崎岖的越野路</small></span><span class="spring-arrow">' + icon('arrow') + '</span><span class="drive-progress"></span></button></section>',
   '    </div><div id="build-panel" class="mode-panel build-panel" role="tabpanel" aria-labelledby="build-tab" hidden>', workshopMarkup(), '</div>',
   '    <div class="discovery-note"><span class="note-icon">' + icon('sparkle') + '</span><div><span class="note-label">小小发现</span><p id="discovery-text" aria-live="polite">先打开车门，看看小勇士的里面吧。</p></div></div>',
   '    <div class="panel-footnote"><span></span>不用赶路，慢慢发现。</div>',
@@ -72,6 +81,8 @@ let garage: Garage | null = null;
 let ready = false;
 let previousSuspension = 'idle';
 let previousDriving = 'idle';
+let selectedRoad: RoadKind = DEFAULT_ROAD;
+const roadButtons = [...document.querySelectorAll<HTMLButtonElement>('[data-road]')];
 const workshop = new Workshop({ garage: () => garage, ready: () => ready, note, sound: () => sounds.play('click') });
 
 function note(text: string): void {
@@ -87,6 +98,9 @@ function updateState(state: CarState): void {
   document.querySelector('[data-action="lights"]')!.setAttribute('aria-pressed', String(state.lights));
   document.querySelector('#light-description')!.textContent = state.lights ? '前灯、尾灯都亮啦' : '照亮小小的冒险';
   const driving = state.driving !== 'idle';
+  for (const button of roadButtons) button.disabled = !ready || driving;
+  const road = ROAD_OPTIONS.find((item) => item.id === selectedRoad)!;
+  document.querySelector('#road-hint')!.textContent = driving ? '正在跑' + road.label + '，停下后可以换路' : road.description;
   for (const part of ['doors', 'hood', 'trunk'] as const) {
     document.querySelector<HTMLButtonElement>('[data-action="' + part + '"]')!.disabled = !ready || driving;
   }
@@ -102,14 +116,14 @@ function updateState(state: CarState): void {
   drive.disabled = !ready || driving || busy;
   drive.setAttribute('aria-busy', String(driving));
   const driveLabels: Record<CarState['driving'], [string, string]> = {
-    idle: ['跑一跑', '开上一段崎岖的越野路'],
+    idle: ['跑一跑', '去' + road.label + '上试一试'],
     starting: ['出发啦', '轮子转起来，慢慢加速'],
-    cruising: ['颠簸前进中', '看四个轮子各自上上下下'],
+    cruising: [selectedRoad === 'flat' ? '稳稳前进中' : '起伏前进中', road.description],
     stopping: ['快到啦', '慢慢停稳，回到车库'],
   };
   document.querySelector('#drive-label')!.textContent = driveLabels[state.driving][0];
   document.querySelector('#drive-description')!.textContent = driveLabels[state.driving][1];
-  if (state.driving === 'idle' && previousDriving !== 'idle') note('跑完一圈回来啦！换个轮胎或底盘，再跑一次看看有什么不同。');
+  if (state.driving === 'idle' && previousDriving !== 'idle') note('跑完一圈回来啦！换条道路，或换个轮胎和底盘，再跑一次看看有什么不同。');
   previousDriving = state.driving;
 }
 
@@ -141,6 +155,7 @@ requestAnimationFrame(() => {
         feedback.hidden = true;
         sceneHost.setAttribute('aria-busy', 'false');
         document.querySelectorAll<HTMLButtonElement>('[data-car-control]').forEach((button) => { button.disabled = false; });
+        updateState(garage!.controller.state);
         workshop.refresh();
         app.dataset.ready = 'true';
       },
@@ -179,9 +194,22 @@ actionButtons.forEach((button) => {
     } else if (action === 'drive') {
       if (garage.startDrive()) {
         sounds.play('engine');
-        note('小车出发啦！看轮子怎么转，弹簧怎么跟着路面一跳一跳。');
+        note('小车出发啦！' + ROAD_OPTIONS.find((road) => road.id === selectedRoad)!.description + '。');
       }
     }
+  });
+});
+
+roadButtons.forEach((button) => {
+  button.addEventListener('click', () => {
+    if (!ready || !garage) return;
+    const kind = button.dataset.road as RoadKind;
+    if (!garage.setRoad(kind)) return;
+    selectedRoad = kind;
+    for (const choice of roadButtons) choice.setAttribute('aria-pressed', String(choice === button));
+    updateState(garage.controller.state);
+    sounds.play('click');
+    note('道路选好啦，点「跑一跑」出发！');
   });
 });
 
