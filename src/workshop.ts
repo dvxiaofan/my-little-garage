@@ -1,5 +1,6 @@
 import { DEFAULT_DESIGN, PAINTS, WHEELS, HEIGHTS, ROOFS, normalizeDesign, normalizeName, suggestName, type CarDesign, type DesignPart } from './customization.ts';
-import { browserDesignStore, MAX_SAVED_CARS, type RemovedCar } from './design-store.ts';
+import { MAX_SAVED_CARS, type RemovedCar } from './design-store.ts';
+import { CloudStore } from './cloud-store.ts';
 import type { Garage } from './garage.ts';
 import { icon } from './icons.ts';
 
@@ -84,6 +85,7 @@ function carPreview(design: CarDesign): string {
 }
 
 interface WorkshopOptions {
+  store: CloudStore;
   garage: () => Garage | null;
   ready: () => boolean;
   note: (text: string) => void;
@@ -91,7 +93,7 @@ interface WorkshopOptions {
 }
 
 export class Workshop {
-  private readonly store = browserDesignStore();
+  private readonly store: CloudStore;
   private readonly options: WorkshopOptions;
   private readonly nameInput = document.querySelector<HTMLInputElement>('#car-name')!;
   private readonly dialog = document.querySelector<HTMLDialogElement>('#collection-dialog')!;
@@ -102,6 +104,8 @@ export class Workshop {
 
   constructor(options: WorkshopOptions) {
     this.options = options;
+    this.store = options.store;
+    this.store.subscribe(() => { this.refresh(false); if (this.dialog.open) this.renderCollection(); });
     this.tabs.forEach((tab, index) => {
       tab.addEventListener('click', () => this.setMode(tab.dataset.mode as 'play' | 'build'));
       tab.addEventListener('keydown', (event) => {
@@ -166,6 +170,11 @@ export class Workshop {
     this.refresh();
   }
 
+  reloadDraft(): void {
+    this.removed = null;
+    this.applyDraft();
+  }
+
   applyDraft(): void {
     this.options.garage()?.applyDesign(this.store.draft);
     this.refresh();
@@ -182,8 +191,8 @@ export class Workshop {
     document.querySelector('#vehicle-description')!.textContent = paint.label + ' · ' + WHEELS.find((item) => item.id === design.wheels)!.label + ' · ' + (design.roof === 'none' ? '你的专属小车' : ROOFS.find((item) => item.id === design.roof)!.label);
     for (const button of this.choiceButtons) button.setAttribute('aria-pressed', String(button.dataset.value === design[button.dataset.designPart as DesignPart]));
     document.querySelector('#saved-count')!.textContent = String(this.store.cars.length);
-    document.querySelector('#save-label')!.textContent = this.store.isSaved ? (this.store.persisted ? '已经存好啦' : '本次已收好') : '存进车库';
-    document.querySelector('#draft-status')!.textContent = this.store.persisted ? '会记住你的改装' : '暂时只在本次保留';
+    document.querySelector('#save-label')!.textContent = this.store.isSaved ? (this.store.persisted ? '已经存好啦' : '等待保存') : '存进车库';
+    document.querySelector('#draft-status')!.textContent = this.store.label;
     const saveButton = document.querySelector<HTMLButtonElement>('#save-car')!;
     saveButton.classList.toggle('is-saved', this.store.isSaved);
     saveButton.disabled = !this.options.ready();
@@ -211,7 +220,7 @@ export class Workshop {
     if (result === 'saved') this.removed = null;
     this.refresh();
     this.options.sound();
-    this.options.note(this.store.persisted ? '「' + this.store.draft.name + '」存好啦！点画面右上的「我的车库」就能找到它。' : '这次先收好啦。浏览器没能保存，关掉或刷新后可能找不到它。');
+    this.options.note('「' + this.store.draft.name + '」已放入车库，正在保存。页面上方会显示保存结果。');
   }
 
   private openCollection(message = ''): void {
@@ -272,7 +281,7 @@ export class Workshop {
     document.querySelector<HTMLElement>('#collection-empty')!.hidden = cars.length > 0;
     document.querySelector<HTMLElement>('#undo-removal')!.hidden = !this.removed;
     document.querySelector('#removed-name')!.textContent = this.removed ? '「' + this.removed.car.design.name + '」移走了' : '';
-    document.querySelector('#storage-note')!.textContent = this.store.persisted ? '小车保存在当前浏览器里。清除网站数据或换浏览器后，需要重新保存。' : '浏览器暂时不能保存。这些小车只在本次打开时保留，刷新后可能丢失。';
+    document.querySelector('#storage-note')!.textContent = this.store.persisted ? '已保存到 ' + this.store.profile.name + ' 的家庭车库，其他设备登录后也能找到。' : this.store.label + '。请先处理页面上方的提示，不要关闭页面。';
     if (cars.length < MAX_SAVED_CARS) document.querySelector<HTMLElement>('#collection-notice')!.hidden = true;
   }
 }

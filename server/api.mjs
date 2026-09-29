@@ -133,6 +133,7 @@ export function createApi({ database = process.env.GARAGE_DB || resolve('data/ga
         // A reset performed while scrypt was running invalidates the old credential.
         if (db.prepare('SELECT hash FROM profiles WHERE id=?').get(row.id)?.hash !== row.hash) fail(401, '口令已更改，请重新输入');
         db.prepare('DELETE FROM attempts WHERE key=?').run('user:' + row.id);
+        db.prepare('UPDATE attempts SET count=MAX(0, count-1) WHERE key=?').run('ip:' + ip);
         issue(res, row.id);
         send(200, { profile: publicProfile(row), ...garage(row.id) });
       } else if (path === '/api/session' && req.method === 'GET') {

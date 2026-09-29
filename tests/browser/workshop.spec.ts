@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from './fixtures';
+import type { Page } from '@playwright/test';
 import { DEFAULT_DESIGN } from '../../src/customization.ts';
 import { STORAGE_KEY } from '../../src/design-store.ts';
 
@@ -64,6 +65,7 @@ test('distinct named cars survive reload, can be reopened, and are kept by resto
   await page.getByLabel('给小车起个名', { exact: true }).fill('红豆小车');
   await choose(page, '存进车库', '存进车库');
   await expect(page.locator('#saved-count')).toHaveText('2');
+  await expect(page.locator('#family-status')).toHaveText('已保存到家庭车库');
   await page.reload();
   await expect(page.locator('#scene canvas')).toHaveAttribute('data-ready', 'true');
   await expect(page.getByRole('heading', { name: '红豆小车', exact: true })).toBeVisible();
@@ -109,23 +111,18 @@ test('a full garage explains capacity without overwriting a car and makes room t
   await expect(page.locator('#undo-removal')).toBeHidden();
 });
 
-test('storage failures keep customization usable and clearly avoid promising persistence', async ({ page }) => {
+test('unavailable local storage does not prevent server saves', async ({ page }) => {
   await page.addInitScript(() => {
     Storage.prototype.setItem = () => { throw new DOMException('Quota exceeded', 'QuotaExceededError'); };
   });
   await boot(page);
   await build(page);
   await choose(page, '天空蓝', '存进车库');
-  await expect(page.locator('#draft-status')).toHaveText('暂时只在本次保留');
-  await expect(page.locator('#save-label')).toHaveText('本次已收好');
-  await expect(page.locator('#discovery-text')).toContainText('浏览器没能保存');
-  await page.locator('#collection-button').click();
-  await expect(page.locator('#storage-note')).toContainText('刷新后可能丢失');
-  await choose(page, '开出越野小勇士');
-  expect((await snapshot(page)).vehicle.design.paint).toBe('blue');
+  await expect(page.locator('#family-status')).toHaveText('已保存到家庭车库');
+  await expect(page.locator('#save-label')).toHaveText('已经存好啦');
   await page.reload();
   await expect(page.locator('#scene canvas')).toHaveAttribute('data-ready', 'true');
-  expect((await snapshot(page)).vehicle.design).toEqual(DEFAULT_DESIGN);
+  expect((await snapshot(page)).vehicle.design.paint).toBe('blue');
 });
 
 test('broken stored data does not block loading, and saved names are displayed as text', async ({ page }) => {

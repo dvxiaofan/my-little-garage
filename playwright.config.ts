@@ -1,5 +1,8 @@
 import { defineConfig } from '@playwright/test';
-import { existsSync } from 'node:fs';
+import { existsSync, mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+const testDatabase = join(mkdtempSync(join(tmpdir(), 'garage-e2e-')), 'garage.sqlite');
 
 const localChrome = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 export default defineConfig({
@@ -11,7 +14,7 @@ export default defineConfig({
   retries: 0,
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
-    baseURL: 'http://127.0.0.1:5173',
+    baseURL: 'http://127.0.0.1:5174',
     viewport: { width: 1440, height: 900 },
     screenshot: 'only-on-failure',
     trace: 'retain-on-failure',
@@ -20,9 +23,10 @@ export default defineConfig({
     },
   },
   webServer: {
-    command: 'npm run dev -- --port 5173 --strictPort',
-    url: 'http://127.0.0.1:5173',
-    reuseExistingServer: !process.env.CI,
+    command: 'npm run dev -- --host 127.0.0.1 --port 5174 --strictPort',
+    env: { GARAGE_DB: testDatabase },
+    url: 'http://127.0.0.1:5174',
+    reuseExistingServer: false,
     timeout: 30_000,
   },
 });

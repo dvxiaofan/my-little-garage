@@ -1,4 +1,6 @@
 import './style.css';
+import { enterFamily, mountFamilyBar } from './family.ts';
+import { CloudStore } from './cloud-store.ts';
 import { ROAD_OPTIONS, DEFAULT_ROAD, type RoadKind } from './terrain.ts';
 import { Garage, type ViewName } from './garage.ts';
 import type { CarState, OpenPart } from './controller.ts';
@@ -32,6 +34,8 @@ function roadChoices(): string {
 }
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
+const familySession = await enterFamily(app);
+const familyStore = new CloudStore(familySession);
 app.innerHTML = [
   '<a class="skip-link" href="#controls">去操作小车</a>',
   '<header class="site-header">',
@@ -83,7 +87,9 @@ let previousSuspension = 'idle';
 let previousDriving = 'idle';
 let selectedRoad: RoadKind = DEFAULT_ROAD;
 const roadButtons = [...document.querySelectorAll<HTMLButtonElement>('[data-road]')];
-const workshop = new Workshop({ garage: () => garage, ready: () => ready, note, sound: () => sounds.play('click') });
+const workshop = new Workshop({ store: familyStore, garage: () => garage, ready: () => ready, note, sound: () => sounds.play('click') });
+
+mountFamilyBar(familyStore, () => { workshop.reloadDraft(); garage?.reset(); });
 
 function note(text: string): void {
   document.querySelector<HTMLElement>('#discovery-text')!.textContent = text;

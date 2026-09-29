@@ -2,10 +2,16 @@
 set -u
 
 cd -- "$(dirname -- "$0")/.." || exit 1
-export PATH="/opt/homebrew/opt/node@24/bin:/opt/homebrew/opt/node@22/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
+export PATH="/opt/homebrew/opt/node@24/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
 
 if ! command -v npm >/dev/null 2>&1; then
-  printf '请先安装 Node.js 22.18 或更新版本，再打开小小车库。\n'
+  printf '请先安装 Node.js 24 或更新版本，再打开小小车库。\n'
+  read -r '?按回车键退出…'
+  exit 1
+fi
+
+if ! node -e 'process.exit(Number(process.versions.node.split(".")[0]) >= 24 ? 0 : 1)'; then
+  printf '家庭车库需要 Node.js 24 或更新版本，请升级后重试。\n'
   read -r '?按回车键退出…'
   exit 1
 fi

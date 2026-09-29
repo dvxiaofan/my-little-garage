@@ -337,3 +337,52 @@ body:has(dialog[open]) { overflow: hidden; }
 .road-choice:hover:not(:disabled) { border-color: var(--green); }
 .road-choice:disabled { opacity: .65; }
 .road-hint { margin: 9px 0 12px; min-height: 18px; color: #7c806f; font-size: 11px; line-height: 1.6; }
+
+/* The family entrance uses the same warm palette as the workshop. */
+.family-entry { min-height: 100svh; display: grid; place-items: center; padding: 32px 18px; background: radial-gradient(ellipse at top, #e7eadc, var(--page) 65%); }
+.entry-card { width: min(100%, 620px); padding: 38px; border: 1px solid #e2e3d7; border-radius: 28px; background: #fffff8; box-shadow: 0 18px 65px #3443370a; text-align: center; }
+.entry-mark { display: inline-grid; place-items: center; width: 78px; height: 78px; border-radius: 24px; background: #f7e6cb; font-size: 44px; transform: rotate(-5deg); }
+.entry-kicker { letter-spacing: 3px; color: #8c947e; font-size: 10px; margin-top: 22px; }
+.entry-card h1 { font-size: 32px; color: #344337; margin: 12px 0; }
+.entry-intro, .entry-footnote { color: #7e8774; font-size: 14px; line-height: 1.8; }
+.entry-footnote { margin: 30px 0 0; font-size: 12px; }
+.profile-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 28px; }
+.profile-card { display: flex; align-items: center; flex-direction: column; gap: 9px; padding: 18px 8px; border-radius: 18px; background: #f3f3e9; color: #344337; border: 1px solid #e0e2d2; overflow-wrap: anywhere; }
+.profile-card:hover { border-color: var(--green); background: #e9eddc; }
+.profile-avatar { font-size: 40px; }
+.profile-card small { color: #8e947f; font-size: 10px; }
+.entry-primary, .entry-secondary { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 12px 20px; border-radius: 13px; font: inherit; font-size: 14px; border: 1px solid #d6dacb; cursor: pointer; }
+.entry-primary { background: var(--green); color: #fff; border-color: var(--green); }
+.entry-secondary { background: #f4f3e9; color: #465840; }
+.entry-primary:disabled, .entry-secondary:disabled { opacity: .55; cursor: wait; }
+#entry-message, #form-error, #manage-error { font-size: 13px; line-height: 1.8; color: #975d36; overflow-wrap: anywhere; }
+#profile-form { text-align: left; margin-top: 20px; }
+#profile-form h2 { margin: 20px 0; overflow-wrap: anywhere; }
+#profile-form label { display: block; margin: 16px 0 8px; font-size: 14px; }
+#profile-form input { width: 100%; height: 52px; border: 1px solid #cfd6c5; border-radius: 12px; background: #fff; padding: 10px 14px; color: #344337; font: inherit; font-size: 20px; }
+#child-pin, #confirm-pin { letter-spacing: 12px; }
+#pin-help { font-size: 12px; color: #8a907e; }
+#enter-garage { width: 100%; }
+.avatar-choices { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.avatar-choices button { min-height: 48px; font-size: 27px; background: #f4f3e9; border: 2px solid transparent; border-radius: 12px; }
+.avatar-choices button[aria-pressed="true"] { border-color: var(--green); background: #e5eddc; }
+.family-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 18px; margin: -8px 32px 16px; padding: 10px 16px; border-radius: 14px; background: #ebeedf; font-size: 12px; color: #67755c; }
+.family-bar #switch-child { margin-left: auto; }
+.family-bar[data-state="error"], .family-bar[data-state="conflict"], .family-bar[data-state="expired"] { background: #fff0d6; color: #875921; }
+.family-bar button { min-height: 36px; }
+.family-dialog { position: fixed; width: min(560px, calc(100vw - 32px)); max-height: calc(100svh - 40px); overflow-y: auto; border: 1px solid #d8ddcf; border-radius: 24px; padding: 30px; color: #344337; background: #fffff7; }
+.family-dialog::backdrop { background: #23312166; backdrop-filter: blur(3px); }
+.family-dialog p { font-size: 13px; line-height: 1.8; overflow-wrap: anywhere; }
+.family-dialog .dialog-close { float: right; }
+.family-actions { display: grid; gap: 10px; }
+.file-label { position: relative; }
+.file-label input { position: absolute; inset: 0; width: 100%; opacity: 0; cursor: pointer; }
+.file-label:focus-within { outline: 3px solid var(--orange); outline-offset: 3px; }
+#legacy-section, #import-confirm { padding-top: 15px; margin-top: 20px; border-top: 1px dashed #d7ddcb; }
+@media (max-width: 600px) {
+  .entry-card { padding: 28px 20px; }
+  .profile-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .entry-card h1 { font-size: 28px; }
+  .family-bar { margin: 0 12px 14px; padding: 8px 12px; gap: 4px 12px; }
+  .family-dialog { padding: 22px; }
+}

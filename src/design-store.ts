@@ -3,6 +3,11 @@ import { DEFAULT_DESIGN, normalizeDesign, sameDesign, type CarDesign } from './c
 export const STORAGE_KEY = 'little-garage.workshop.v1';
 export const MAX_SAVED_CARS = 6;
 type LocalStorage = Pick<Storage, 'getItem' | 'setItem'>;
+export interface GarageData { version: 1; draft: CarDesign; cars: SavedCar[] }
+/** getRandomValues also works on a LAN HTTP page, where randomUUID may be unavailable. */
+export function carId(): string {
+  return Array.from(crypto.getRandomValues(new Uint8Array(16)), (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
 export interface SavedCar { id: string; design: CarDesign }
 export interface RemovedCar { car: SavedCar; index: number }
 
@@ -39,6 +44,14 @@ export class DesignStore {
     }
   }
 
+  snapshot(): GarageData { return { version: 1, draft: this.draft, cars: this.cars }; }
+
+  replace(data: GarageData, save = true): void {
+    this.current = normalizeDesign(data.draft);
+    this.collection = data.cars.slice(0, MAX_SAVED_CARS).map(copyCar);
+    if (save) this.write();
+  }
+
   get draft(): CarDesign { return { ...this.current }; }
   get cars(): SavedCar[] { return this.collection.map(copyCar); }
   get persisted(): boolean { return this.durable; }
@@ -52,7 +65,7 @@ export class DesignStore {
   save(): 'saved' | 'existing' | 'full' {
     if (this.isSaved) { this.write(); return 'existing'; }
     if (this.collection.length >= MAX_SAVED_CARS) return 'full';
-    this.collection.unshift({ id: crypto.randomUUID(), design: { ...this.current } });
+    this.collection.unshift({ id: carId(), design: { ...this.current } });
     this.write();
     return 'saved';
   }
