@@ -130,3 +130,29 @@ test('legacy work is imported only after preview and confirmation, with deduplic
   await expect(page.locator('#family-dialog')).not.toBeVisible();
   await expect(page.locator('#saved-count')).toHaveText('1');
 });
+
+test.describe('touch entrance', () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  test('narrow-screen registration and backup-file confirmation stay usable', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: '＋ 添加小朋友', exact: true }).tap();
+    await page.getByLabel('小朋友的名字').fill('触屏小车迷');
+    await page.getByLabel('4 位数字口令', { exact: true }).fill('2468');
+    await page.getByLabel('再输入一次口令').fill('2468');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.screenshot({ path: 'test-results/family-register-narrow.png', fullPage: true });
+    await page.getByRole('button', { name: '创建我的车库' }).tap();
+    await ready(page);
+    await page.locator('#family-manage').tap();
+    const backup = { version: 1, draft: { ...DEFAULT_DESIGN, name: '从文件带来的车' }, cars: [] };
+    await page.locator('#import-file').setInputFiles({ name: 'garage.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(backup)) });
+    await expect(page.locator('#import-confirm')).toBeVisible();
+    expect((await (await page.request.get('/api/garage')).json()).garage.cars).toHaveLength(0);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.screenshot({ path: 'test-results/family-import-narrow.png', fullPage: true });
+    await page.getByRole('button', { name: '确认导入', exact: true }).tap();
+    await expect(page.locator('#manage-error')).toContainText('已带入 1 辆');
+    await page.getByRole('button', { name: '关闭车库管理' }).tap();
+    await expect(page.locator('#saved-count')).toHaveText('1');
+  });
+});

@@ -1,0 +1,14 @@
+services:
+  garage:
+    build: .
+    ports:
+      - "5173:5173"
+    environment:
+      GARAGE_DB: /app/data/garage.sqlite
+      # Set to "1" only when visitors use HTTPS through a reverse proxy.
+      GARAGE_SECURE_COOKIE: "0"
+    volumes:
+      - garage-data:/app/data
+    restart: unless-stopped
+volumes:
+  garage-data:
