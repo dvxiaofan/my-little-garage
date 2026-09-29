@@ -10,6 +10,8 @@ playwright/.cache/
 
 # local scratch (uPic 原图已上传图床)
 assets/
+# One-off local scripts and scratch files at the repository root
+/.tmp-*
 
 # env / os / editor
 .env
