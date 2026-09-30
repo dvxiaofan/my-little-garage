@@ -2,6 +2,7 @@ import { api, ApiError, CloudStore, readBackup, type FamilySession } from './clo
 import { AVATARS, type Profile } from './profiles.ts';
 import { STORAGE_KEY, type GarageData } from './design-store.ts';
 import { DEFAULT_DESIGN, sameDesign } from './customization.ts';
+import { mountPinInput } from './pin-input.ts';
 
 const text = (selector: string, value: string) => { document.querySelector(selector)!.textContent = value; };
 
@@ -9,6 +10,7 @@ export async function enterFamily(host: HTMLElement): Promise<FamilySession> {
   host.innerHTML = '<main class="family-entry"><div class="entry-card"><span class="entry-mark">🚙</span><p class="entry-kicker">MY LITTLE GARAGE</p><h1>谁来开小车？</h1><p class="entry-intro">选好自己的头像，打开属于你的车库。</p><div id="profile-list" class="profile-list"></div><p id="entry-message" role="status">正在打开家庭车库…</p><button id="add-child" class="entry-secondary" hidden>＋ 添加小朋友</button><button id="retry-entry" class="entry-secondary" hidden>重新连接</button><form id="profile-form" hidden><button type="button" id="back-profiles" class="text-button">← 返回选择</button><h2 id="form-title"></h2><div id="new-child-fields" hidden><label for="child-name">小朋友的名字</label><input id="child-name" maxlength="12" autocomplete="off"><label>选个头像</label><div id="avatar-choices" class="avatar-choices"></div></div><label for="child-pin">4 位数字口令</label><input id="child-pin" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" minlength="4" required autocomplete="current-password"><div id="confirm-pin-field" hidden><label for="confirm-pin">再输入一次口令</label><input id="confirm-pin" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="new-password"></div><p id="pin-help">忘记口令了？请家长在服务器上重置。</p><p id="form-error" role="alert"></p><button id="enter-garage" class="entry-primary" type="submit">打开车库</button></form><p class="entry-footnote">每一辆小车，都能在下次见面时找回来。</p></div></main>';
   const list = document.querySelector<HTMLElement>('#profile-list')!;
   const form = document.querySelector<HTMLFormElement>('#profile-form')!;
+  form.querySelectorAll<HTMLInputElement>('#child-pin, #confirm-pin').forEach(mountPinInput);
   const add = document.querySelector<HTMLButtonElement>('#add-child')!;
   const retry = document.querySelector<HTMLButtonElement>('#retry-entry')!;
   let selected: Profile | null = null;

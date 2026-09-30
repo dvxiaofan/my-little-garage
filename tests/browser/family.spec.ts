@@ -131,8 +131,82 @@ test('legacy work is imported only after preview and confirmation, with deduplic
   await expect(page.locator('#saved-count')).toHaveText('1');
 });
 
+test('four PIN cells preserve leading zeros, editing, paste and form resets', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: '＋ 添加小朋友', exact: true }).click();
+  const pin = page.getByLabel('4 位数字口令', { exact: true });
+  const cells = page.locator('#child-pin-cells .pin-cell');
+  await expect(cells).toHaveCount(4);
+  await expect(page.locator('#confirm-pin-cells .pin-cell')).toHaveCount(4);
+  await expect(pin).toHaveAttribute('type', 'password');
+  await expect(pin).toHaveAttribute('inputmode', 'numeric');
+  await pin.pressSequentially('012');
+  await expect(cells).toHaveText(['●', '●', '●', '']);
+  await pin.press('ArrowLeft');
+  await expect(cells.nth(2)).toHaveAttribute('data-active', 'true');
+  await pin.press('Backspace');
+  await expect(pin).toHaveValue('02');
+  await pin.press('ControlOrMeta+A');
+  await pin.evaluate(input => {
+    const data = new DataTransfer(); data.setData('text/plain', '0123');
+    input.dispatchEvent(new ClipboardEvent('paste', { bubbles: true, cancelable: true, clipboardData: data }));
+  });
+  await expect(pin).toHaveValue('0123');
+  await expect(cells).toHaveText(['●', '●', '●', '●']);
+  const box = (await cells.nth(1).boundingBox())!;
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+  await pin.press('8');
+  await expect(pin).toHaveValue('0823');
+  await pin.press('Tab');
+  await expect(page.getByLabel('再输入一次口令')).toBeFocused();
+  await page.getByRole('button', { name: '← 返回选择', exact: true }).click();
+  await page.getByRole('button', { name: '＋ 添加小朋友', exact: true }).click();
+  await expect(pin).toHaveValue('');
+  await expect(cells).toHaveText(['', '', '', '']);
+  await page.getByLabel('小朋友的名字').fill('四格小车迷');
+  await pin.fill('012');
+  await page.getByLabel('再输入一次口令').fill('012');
+  await page.getByRole('button', { name: '创建我的车库', exact: true }).click();
+  await expect(pin).toHaveAttribute('aria-invalid', 'true');
+  await pin.fill('0123');
+  await page.getByLabel('再输入一次口令').fill('0123');
+  await page.getByRole('button', { name: '创建我的车库', exact: true }).click();
+  await ready(page);
+  await page.getByRole('button', { name: '换小朋友', exact: true }).click();
+  await page.getByRole('button', { name: '进入四格小车迷', exact: true }).click();
+  await expect(cells).toHaveCount(4);
+  await expect(pin).toHaveValue('');
+  await expect(page.locator('#confirm-pin-field')).toBeHidden();
+  await pin.fill('0123');
+  await page.getByRole('button', { name: '打开车库', exact: true }).click();
+  await ready(page);
+});
+
 test.describe('touch entrance', () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  test('four PIN cells stay touchable on small phones and only accept four digits', async ({ page }) => {
+    for (const width of [320, 390]) {
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto('/');
+      await page.getByRole('button', { name: '＋ 添加小朋友', exact: true }).tap();
+      const pin = page.getByLabel('4 位数字口令', { exact: true });
+      const cells = page.locator('#child-pin-cells .pin-cell');
+      await expect(cells).toHaveCount(4);
+      await pin.tap();
+      await pin.pressSequentially('0a1b2345');
+      await expect(pin).toHaveValue('0123');
+      const bounds = await cells.evaluateAll(items => items.map(item => {
+        const rect = item.getBoundingClientRect(); return { top: rect.top, width: rect.width, height: rect.height };
+      }));
+      expect(bounds.every(rect => rect.top === bounds[0].top && rect.width >= 48 && rect.height >= 48)).toBe(true);
+      const layout = await page.evaluate(() => ({
+        viewport: innerWidth, scroll: document.documentElement.scrollWidth,
+        widths: ['.family-entry', '.entry-card', '.pin-field', '.avatar-choices'].map(selector => ({ selector, width: document.querySelector(selector)!.getBoundingClientRect().width })),
+      }));
+      expect(layout.scroll, JSON.stringify(layout)).toBeLessThanOrEqual(layout.viewport);
+      await page.screenshot({ path: 'test-results/pin-phone-' + width + '.png', fullPage: true });
+    }
+  });
   test('narrow-screen registration and backup-file confirmation stay usable', async ({ page }) => {
     await page.goto('/');
     await page.getByRole('button', { name: '＋ 添加小朋友', exact: true }).tap();

@@ -360,7 +360,13 @@ body:has(dialog[open]) { overflow: hidden; }
 #profile-form h2 { margin: 20px 0; overflow-wrap: anywhere; }
 #profile-form label { display: block; margin: 16px 0 8px; font-size: 14px; }
 #profile-form input { width: 100%; height: 52px; border: 1px solid #cfd6c5; border-radius: 12px; background: #fff; padding: 10px 14px; color: #344337; font: inherit; font-size: 20px; }
-#child-pin, #confirm-pin { letter-spacing: 12px; }
+.pin-field { position: relative; width: min(100%, 304px); }
+#profile-form .pin-field input { position: absolute; inset: 0; z-index: 1; height: 100%; opacity: 0; cursor: text; }
+.pin-cells { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; pointer-events: none; }
+.pin-cell { position: relative; display: grid; place-items: center; height: 64px; border: 2px solid #cfd6c5; border-radius: 12px; background: #fff; color: var(--green); font-size: 20px; }
+.pin-field:focus-within .pin-cell[data-active="true"] { border-color: var(--green); box-shadow: 0 0 0 3px #dde6d4; }
+.pin-field:focus-within .pin-cell[data-active="true"]:empty::after { content: ''; width: 2px; height: 22px; background: var(--green); }
+.pin-field[data-invalid="true"] .pin-cell { border-color: #a65f39; background: #fff8f1; }
 #pin-help { font-size: 12px; color: #8a907e; }
 #enter-garage { width: 100%; }
 .avatar-choices { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
@@ -381,6 +387,7 @@ body:has(dialog[open]) { overflow: hidden; }
 #legacy-section, #import-confirm { padding-top: 15px; margin-top: 20px; border-top: 1px dashed #d7ddcb; }
 @media (max-width: 600px) {
   .entry-card { padding: 28px 20px; }
+  .avatar-choices { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .profile-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .entry-card h1 { font-size: 28px; }
   .family-bar { margin: 0 12px 14px; padding: 8px 12px; gap: 4px 12px; }
