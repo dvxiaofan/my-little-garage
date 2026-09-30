@@ -31,7 +31,7 @@ test('create a child, open the same garage on another device, and switch without
     await page.goto('/');
     await page.getByRole('button', { name: '＋ 添加小朋友', exact: true }).click();
     await page.getByLabel('小朋友的名字').fill('小禾');
-    await page.getByRole('button', { name: '头像 🦊' }).click();
+    await page.getByRole('button', { name: '头像 橙色皮卡' }).click();
     await page.getByLabel('4 位数字口令', { exact: true }).fill('2468');
     await page.getByLabel('再输入一次口令').fill('0000');
     await page.getByRole('button', { name: '创建我的车库' }).click();
@@ -131,6 +131,45 @@ test('legacy work is imported only after preview and confirmation, with deduplic
   await expect(page.locator('#saved-count')).toHaveText('1');
 });
 
+test('car avatar choices have distinct shapes and persist across every identity display', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: '＋ 添加小朋友', exact: true }).click();
+  const choices = page.locator('#avatar-choices button');
+  await expect(choices.locator('svg')).toHaveCount(6);
+  const bodies = await choices.locator('.car-body').evaluateAll(paths => paths.map(path => ({ shape: path.getAttribute('d'), color: path.getAttribute('fill') })));
+  expect(new Set(bodies.map(body => body.shape)).size).toBe(6);
+  expect(new Set(bodies.map(body => body.color)).size).toBe(6);
+  await page.getByRole('button', { name: '头像 橙色皮卡', exact: true }).click();
+  await expect(page.getByRole('button', { name: '头像 橙色皮卡', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await page.getByLabel('小朋友的名字').fill('汽车头像小车迷');
+  await page.getByLabel('4 位数字口令', { exact: true }).fill('2468');
+  await page.getByLabel('再输入一次口令').fill('2468');
+  await page.screenshot({ path: 'test-results/car-avatars-desktop.png', fullPage: true });
+  await page.getByRole('button', { name: '创建我的车库', exact: true }).click();
+  await ready(page);
+  await expect(page.locator('#family-manage svg')).toHaveAttribute('data-avatar', 'car-orange-pickup');
+  await page.locator('#family-manage').click();
+  await expect(page.locator('#family-owner svg')).toHaveAttribute('data-avatar', 'car-orange-pickup');
+  await page.getByRole('button', { name: '关闭车库管理', exact: true }).click();
+  await page.getByRole('button', { name: '换小朋友', exact: true }).click();
+  const profile = page.getByRole('button', { name: '进入汽车头像小车迷', exact: true });
+  await expect(profile.locator('svg')).toHaveAttribute('data-avatar', 'car-orange-pickup');
+  await profile.click();
+  await expect(page.locator('#form-title svg')).toHaveAttribute('data-avatar', 'car-orange-pickup');
+});
+
+test('legacy car avatar display changes without rewriting stored identity or garage', async ({ page }) => {
+  const old = await register(page, '旧头像小车迷');
+  await page.goto('/'); await ready(page);
+  await expect(page.locator('#family-manage svg')).toHaveAttribute('data-avatar', 'car-purple-mini');
+  await saveCar(page, '旧头像的作品');
+  await page.reload(); await ready(page);
+  await expect(page.locator('#vehicle-name')).toHaveText('旧头像的作品');
+  const profile = (await (await page.request.get('/api/session')).json()).profile;
+  expect(profile).toEqual(old.profile);
+  expect(profile.avatar).toBe('🐱');
+});
+
 test('four PIN cells preserve leading zeros, editing, paste and form resets', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: '＋ 添加小朋友', exact: true }).click();
@@ -204,6 +243,8 @@ test.describe('touch entrance', () => {
         widths: ['.family-entry', '.entry-card', '.pin-field', '.avatar-choices'].map(selector => ({ selector, width: document.querySelector(selector)!.getBoundingClientRect().width })),
       }));
       expect(layout.scroll, JSON.stringify(layout)).toBeLessThanOrEqual(layout.viewport);
+      await expect(page.locator('#avatar-choices svg')).toHaveCount(6);
+      expect(await page.locator('#avatar-choices').evaluate(element => getComputedStyle(element).gridTemplateColumns.split(' ').length)).toBe(3);
       await page.screenshot({ path: 'test-results/pin-phone-' + width + '.png', fullPage: true });
     }
   });

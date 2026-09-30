@@ -75,3 +75,21 @@ test('expired sessions, cross-origin writes, invalid and oversized garages are r
   stamp += 13 * 60 * 60 * 1000;
   assert.equal((await f.request('session', 'GET', undefined, a.cookie)).status, 401);
 });
+
+test('car avatars accept all six designs while legacy profiles remain usable', async t => {
+  const f = await fixture(t);
+  for (const avatar of ['car-red-sports', 'car-blue-sedan', 'car-green-suv', 'car-orange-pickup', 'car-yellow-bus', 'car-purple-mini']) {
+    const created = await f.request('profiles', 'POST', { ...newUser, avatar });
+    assert.equal(created.status, 201, avatar);
+    assert.equal(created.data.profile.avatar, avatar);
+  }
+  const legacy = await f.request('profiles', 'POST', newUser);
+  assert.equal(legacy.status, 201);
+  f.restart();
+  const login = await f.request('login', 'POST', { id: legacy.data.profile.id, pin: newUser.pin });
+  assert.equal(login.status, 200);
+  assert.equal(login.data.profile.avatar, '🐻');
+  for (const avatar of ['car-unknown', '<svg onload=alert(1)>']) {
+    assert.equal((await f.request('profiles', 'POST', { ...newUser, avatar })).status, 400);
+  }
+});

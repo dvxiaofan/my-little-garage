@@ -4,7 +4,7 @@ import { promisify } from 'node:util';
 import { mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { DEFAULT_DESIGN, normalizeDesign } from '../src/customization.ts';
-import { AVATARS } from '../src/profiles.ts';
+import { isAvatar } from '../src/profiles.ts';
 
 const scrypt = promisify(scryptCallback);
 const digest = value => createHash('sha256').update(value).digest('hex');
@@ -108,7 +108,7 @@ export function createApi({ database = process.env.GARAGE_DB || resolve('data/ga
         const value = await body(req);
         const name = typeof value?.name === 'string' ? value.name.trim() : '';
         if (!name || Array.from(name).length > 12 || /[\u0000-\u001f\u007f]/.test(name)) fail(400, '名字请填写 1 到 12 个字');
-        if (!AVATARS.includes(value.avatar)) fail(400, '请选择一个头像');
+        if (!isAvatar(value.avatar)) fail(400, '请选择一个头像');
         pinValid(value.pin);
         const id = randomUUID();
         const salt = randomBytes(16).toString('hex');
